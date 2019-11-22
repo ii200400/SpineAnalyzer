@@ -29,7 +29,7 @@ class MoniterView(object):
     pass
 
 
-cameraObject: camera.ImageDetection # 카메라 객체
+cameraObject: camera.ImageAnalyzer # 카메라 객체
 mainView: MainView  # 메인화면 객체 (지역변수로 사용하니 함수가 종료되면서 사라져서 임시적 조치로 여기에 정의)
 moniterView: MoniterView    # 탭 화면 객체
 
@@ -166,7 +166,7 @@ class MainView(QWidget):
     def initUI(self):
         global cameraObject
 
-        cameraObject = camera.ImageDetection()  # 카메라 객체 생성
+        cameraObject = camera.ImageAnalyzer()  # 카메라 객체 생성
 
         # 카메라 버튼에 관한 설정
         self.camera_but.setFixedSize(72, 72)
@@ -297,11 +297,6 @@ class MainView(QWidget):
         # 메세지 창 생성 및 세부 설정
         message = QMessageBox()
         message.setWindowIcon(QIcon('./image/broken-neck.png'))
-        message.setWindowTitle("Confirm")
-        message.setText("이 사진으로 하시겠습니까?")
-        message.setIcon(QMessageBox.Question)
-        message.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        message.setDefaultButton(QMessageBox.No)
         message.setStyleSheet("QMessageBox { background-color: #232d40;}"
                               "QMessageBox QLabel { "
                               "padding: 20px 5px 5px 5px;"
@@ -313,21 +308,39 @@ class MainView(QWidget):
                               "QMessageBox QPushButton:pressed { background-color: #8c8c8c; }")
         message.setWindowFlags(Qt.WindowTitleHint)
 
-        #메세지 창 버튼에 대한 결과
-        answer = message.exec_()
+        status = self.showImage()
+        if status in [0, 1]:
+            message.setWindowTitle("Warning")
+            message.setText("얼굴이 인식되지 않았습니다.\n다시 찍어주세요.")
+            message.setIcon(QMessageBox.Warning)
+            message.setStandardButtons(QMessageBox.Yes)
+            message.setDefaultButton(QMessageBox.Yes)
 
-        if answer == QMessageBox.Yes:    # 확인 버튼을 눌렀다면 현재 창을 숨기고 다른 창을 보인다.
-            self.hide()
-            moniterView.show()
-        else:                           # 취소 버튼을 눌렀다면 타이머를 다시 시작한다.
+            message.exec_()
+
             self.timer.start(1000 // fps)
-        return
+
+        elif status == 2:
+            message.setWindowTitle("Confirm")
+            message.setText("이 사진으로 하시겠습니까?")
+            message.setIcon(QMessageBox.Question)
+            message.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            message.setDefaultButton(QMessageBox.No)
+
+            #메세지 창 버튼에 대한 결과
+            answer = message.exec_()
+
+            if answer == QMessageBox.Yes:    # 확인 버튼을 눌렀다면 현재 창을 숨기고 다른 창을 보인다.
+                self.hide()
+                moniterView.show()
+            else:                           # 취소 버튼을 눌렀다면 타이머를 다시 시작한다.
+                self.timer.start(1000 // fps)
 
     # 카메라 객체에서 이미지를 받아와서 뷰 화면에서 보이도록 한다.
     def showImage(self):
-        img = cameraObject.FaceDetect()
+        status, frame = cameraObject.setFrame()
 
-        if type(img) == bool:   # 이미지가 성공적으로 반환되었을 때
+        if status == 0:         # 이미지가 반환되지 않았을 때
             pix = QPixmap('./image/disconnected').scaled(
                 128,
                 128,
@@ -335,8 +348,8 @@ class MainView(QWidget):
                 Qt.SmoothTransformation)
             self.camera_label.setPixmap(pix)
 
-        else:                   # 이미지가 반환되지 않았을 때
-            qImg = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
+        elif status in [1, 2]:  # 이미지가 성공적으로 반환되었을 때
+            qImg = QImage(frame.data, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
             pix = QPixmap.fromImage(qImg).scaled(
                 self.width(),
                 self.height(),
@@ -344,6 +357,7 @@ class MainView(QWidget):
                 Qt.SmoothTransformation)
 
         self.camera_label.setPixmap(pix)
+        return status
 
 
 # 텝이 있는 두번째 창, 첫 탭은 현재 상태를 보이는 탭이고 두번째 탭은 설정을 바꿀 수 있는 창이다.
