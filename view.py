@@ -15,8 +15,7 @@
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from PyQt5 import QtMultimedia
-from PyQt5.QtWidgets import QWidget
+import winsound
 
 import camera
 
@@ -136,6 +135,7 @@ class SplashView(QWidget):
 
         self.timer.stop()
         mainView = MainView()
+        mainView.timer.start(1000 // fps)  # 단위 : 마이크로세컨드
         mainView.show()
 
         self.close()
@@ -203,7 +203,7 @@ class MainView(QWidget):
 
         # 카메라 타이머 설정
         self.timer.timeout.connect(self.showImage)
-        self.timer.start(1000 // fps)  # 단위 : 마이크로세컨드
+        self.timer.stop()
 
         # 텍스트들을 모아놓을 그룹 세부 설정
         guideBox = QGroupBox('사용 방법')
@@ -331,7 +331,12 @@ class MainView(QWidget):
             answer = message.exec_()
 
             if answer == QMessageBox.Yes:    # 확인 버튼을 눌렀다면 현재 창을 숨기고 다른 창을 보인다.
+                cameraObject.setStandardPose()
+
                 self.hide()
+
+                moniterView.analyzeTap.timer.start(1000 // fps)
+                moniterView.analyzeTap.alarm_timer.start(5000)
                 moniterView.show()
             else:                           # 취소 버튼을 눌렀다면 타이머를 다시 시작한다.
                 self.timer.start(1000 // fps)
@@ -360,10 +365,13 @@ class MainView(QWidget):
         return status
 
 
-# 텝이 있는 두번째 창, 첫 탭은 현재 상태를 보이는 탭이고 두번째 탭은 설정을 바꿀 수 있는 창이다.
+# 텝이 있는 창, 첫 탭은 현재 상태를 보이는 탭이고 두번째 탭은 설정을 바꿀 수 있는 창이다.
 class MoniterView(QDialog):
     def __init__(self):
         super().__init__()
+
+        self.analyzeTap = AnalyzerTap()
+        self.settingTap = SettingTap()
 
         self.setStyleSheet("QDialog { background-color: #232d40;}")
         self.initUI()
@@ -372,8 +380,6 @@ class MoniterView(QDialog):
         # 탭을 넣을 위젯 생성 및 세부 설정
         tabs = QTabWidget() 
         tabs.setMovable(True)
-        # TODO 아이콘 쓰면 사용한다.
-        # tabs.setIconSize(QSize(24, 24))
         tabs.setStyleSheet("QTabWidget::pane { background-color: #232d40;"
                            "border: 2px solid #e1effa; border-radius: 4px; border-top-left-radius: 0px; }"
                            "QTabBar::tab {"
@@ -388,12 +394,9 @@ class MoniterView(QDialog):
                            "border-bottom-color: #e1effa; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;"
                            "margin: 5px; padding: 3px; background: #e1effa; color: #232d40;}")
 
-        # TODO 아이콘 넣을지 말지
         # 탭 추가
-        # tabs.addTab(AnalyzerTap(), QIcon('./image/Posture.png'), 'Status')
-        # tabs.addTab(SettingTap(), QIcon('./image/Setting.png'), 'Setting')
-        tabs.addTab(AnalyzerTap(), 'Status')
-        tabs.addTab(SettingTap(), 'Setting')
+        tabs.addTab(self.analyzeTap, 'Status')
+        tabs.addTab(self.settingTap, 'Setting')
 
         # 레이아웃 생성 및 설정
         hbox = QHBoxLayout()
@@ -418,67 +421,57 @@ class AnalyzerTap(QWidget):
         super().__init__()
 
         self.status_label = QLabel()    # 사용자 상태를 반영하는 이미지
-        self.left_siren = QLabel()      
-        self.right_siren = QLabel()
+        self.x_label = QLabel('알 수 없음')
+        self.y_label = QLabel('알 수 없음')
+        self.z_label = QLabel('알 수 없음')
+
         self.timer = QTimer()
-        # TODO 빼자 import도 빼고
-        self.player = QtMultimedia.QMediaPlayer()
+        self.alarm_timer = QTimer()
 
         self.initUI()
 
     def initUI(self):
-        self.left_siren.setPixmap(QPixmap('./image/black_siren.png').scaled(
-            64,
-            64,
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation))
-        self.left_siren.setAlignment(Qt.AlignBottom)
-
-        self.right_siren.setPixmap(QPixmap('./image/black_siren.png').scaled(
-            64,
-            64,
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation))
-        self.right_siren.setAlignment(Qt.AlignBottom)
-
         self.status_label.setPixmap(QPixmap('./image/man.png').scaled(
-            self.status_label.width() // 4,
-            self.status_label.height(),
+            self.width() // 4,
+            self.height() // 4,
             Qt.KeepAspectRatio,
             Qt.SmoothTransformation))
         self.status_label.setAlignment(Qt.AlignCenter)
 
-        self.timer.timeout.connect(self.showImage)
-        self.timer.start(1000 // fps)  # 단위 : 마이크로세컨드
+        for label in [self.x_label, self.y_label, self.z_label]:
+            label.setFont(QFont('나눔바른펜', 12, 50))
+            label.setStyleSheet("color: #e1effa")
+            label.setAlignment(Qt.AlignCenter)
 
-        # TODO
-        # self.sirenAlarm()
+        self.alarm_timer.timeout.connect(self.sirenAlarm)
+        self.alarm_timer.stop()
+
+        self.timer.timeout.connect(self.analyzeImage)
+        self.timer.stop()
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.x_label)
+        vbox.addWidget(self.y_label)
+        vbox.addWidget(self.z_label)
 
         hbox = QHBoxLayout()
-        hbox.addWidget(self.left_siren, 1)
-        hbox.addWidget(self.status_label, 4)
-        hbox.addWidget(self.right_siren, 1)
+        hbox.addWidget(self.status_label, 1)
+        hbox.addLayout(vbox, 1)
 
         self.setLayout(hbox)
 
-    def showImage(self):
-        status = cameraObject.FaceAnalyze()
-        # TODO 할수 있으면 애니매이션으로 바꾸자.
-        # if status == 'good':
-        # something
+    # 자세를 분석한 결과를 메시지로 보여주는 함수
+    # TODO 할수 있으면 애니매이션으로 바꾸자.
+    def analyzeImage(self):
+        messages = cameraObject.getMessages()
 
-        # elif status == 'bad':
-        # something
-
-        # self.status_label.setPixmap(QPixmap('./image/man.png'))
+        self.x_label.setText(messages[0])
+        self.y_label.setText(messages[1])
+        self.z_label.setText(messages[2])
 
     # TODO winsound로 고쳐야함
     def sirenAlarm(self):
-        url = QUrl.fromLocalFile("./sound/ambulance.mp3")
-        content = QtMultimedia.QMediaContent(url)
-
-        self.player.setMedia(content)
-        self.player.play()
+        return
 
 
 # 두번째 탭
