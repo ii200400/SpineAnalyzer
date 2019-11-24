@@ -1,12 +1,9 @@
-# https://www.youtube.com/watch?v=tpWVyJqehG4&vl=ko 참고
-import cv2
-import dlib
-import numpy as np
+# https://www.youtube.com/watch?v=tpWVyJqehG4&vl=ko 참고 (im)
 import imutils
 from imutils import face_utils
-# import time
+import cv2
+import dlib
 import math
-# import winsound
 
 pi = math.pi
 
@@ -14,8 +11,8 @@ pi = math.pi
 class ImageAnalyzer:
     # TODO 카메라 연결 상태에 따라서 필러그가 뽑혔을 때 다시 연결을 계속 시도해보도록 하려고 했는데 어렵다;;
     def __init__(self):
-        # self.cam = cv2.VideoCapture(0)  # 카메라 지정 웹캠이 안되면 아래의 파일을 임시로 사용하겠다.
-        self.cam = cv2.VideoCapture("./example.mp4")
+        self.cam = cv2.VideoCapture(0)  # 카메라 지정 웹캠이 안되면 아래의 파일을 임시로 사용하겠다.
+        # self.cam = cv2.VideoCapture("./example.mp4")
 
         self.detector = dlib.get_frontal_face_detector()  # 얼굴인식 모델
         self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")  # 얼굴 특징점 모델
@@ -36,7 +33,7 @@ class ImageAnalyzer:
     # 이미지 존재여부와 이미지 자체와 이미지의 특징점을 반환하는 함수
     def faceDetect(self):
         ret, frame = self.cam.read()
-        frame = imutils.resize(frame, width=400)
+        frame = imutils.resize(frame, width=800)
 
         # TODO ret이 언제 false가 되는지를 잘 모르겠다;
         # 카메라는 연결이 되어있는데 어떤 이유로 이미지를 불러오지 못하면 false가 나오기는 한다.
@@ -47,6 +44,8 @@ class ImageAnalyzer:
         # 얼굴 인식
         faces = self.detector(frame)
         if len(faces) == 0:  # 인식되는 얼굴이 없는 경우
+            #TODO 개발자용 코드
+            cv2.imshow("Frame", frame)
             return 1, (frame, None)
 
         # 첫번째로 인식되는 얼굴만 탐색
@@ -126,39 +125,73 @@ class ImageAnalyzer:
         self.std_pose = self.getPose(self.std_shape)
         return
 
-    # 특징점을 가지고 x축을 기준으로 몇도가 기울인지 반환
-    # def visual_x_alarm(self, std_lefteye_h, std_righteye_h, cur_lefteye_h, cur_righteye_h, low_jaw):
-    #     # 가장 아래 좌표부터 평균 눈 높이까지의 길이
-    #     std_eye_h = (std_lefteye_h + std_righteye_h) / 2 - low_jaw
-    #     cur_eye_h = (cur_lefteye_h + cur_righteye_h) / 2 - low_jaw
-    #
-    #     # 눈<->턱아래점(목).
-    #     length = std_eye_h - low_jaw
-    #     x_angle = math.acos(cur_eye_h / length) * (180 / pi)
-    #
-    #     # 왠지 모르겠는데 90도 기준
-    #     if x_angle > 95:
-    #         msg = "Tilt your head " + str(round(x_angle - 90, 2)) + " UP on the x axis"
-    #         return msg
-    #     if x_angle < 85:
-    #         msg = "Tilt your head " + str(abs(round(x_angle - 90, 2))) + " DOWN on the x axis"
-    #         return msg
-    #     return "head(x axis): OK"
-
-    # 특징점을 가지고 x축을 기준으로 몇도가 기울인지 반환
+    # 0-mouth (0,1), 1-inner mouth(2,3), 2-right eyebrow(4,5), 3-left eyebrow(6,7)
+    # 4-right eye(8,9), 5-left eye(10,11), 6-nose(12,13), 7-jaw(14,15)
+    # 특징점을 가지고 x축을 기준으로 몇도가 기울인지 반환 (끄덕끄덕)
     def visual_x_alarm(self):
-        return "이것은 x"
+        std_pose = self.std_pose
+        cur_pose = self.cur_pose
+        # TODO 임의로 턱의 중앙점을 넣었습니다. 코딩할 때 low_jaw를 고려하지 않아서;;
+        low_jaw = self.std_shape[67 - 59][1]
 
-    # 특징점을 가지고 y축을 기준으로 몇도가 기울인지 반환
+        #턱에서 눈(양눈의 평균)까지의 거리
+        std_eye_h = (std_pose[4][1] + std_pose[5][1]) / 2 - low_jaw
+        cur_eye_h = (cur_pose[4][1] + cur_pose[5][1]) / 2 - low_jaw
+        # 눈<->턱아래점(목).
+        length = std_eye_h - low_jaw
+
+        x_angle = math.acos(cur_eye_h / length) * (180 / pi)
+        return x_angle
+
+    # 특징점을 가지고 y축을 기준으로 몇도가 기울인지 반환 (갸웃갸웃)
     def visual_y_alarm(self):
-        return "이것은 y"
+        std_pose = self.std_pose
+        cur_pose = self.cur_pose
 
-    # 특징점을 가지고 z축을 기준으로 몇도가 기울인지 반환
+        x1 = std_pose[4][0] - std_pose[5][0]
+        y1 = std_pose[4][1] - std_pose[5][1]
+        x2 = cur_pose[4][0] - cur_pose[5][0]
+        y2 = cur_pose[4][1] - cur_pose[5][0]
+        # 우측 값이 라디안이라 180/np.pi 로 360도 값으로 변환.
+        y_angle = round(
+            math.asin((x1 * y2 - y1 * x2) / (math.sqrt(x1 * x1 + y1 * y1) * math.sqrt(x2 * x2 + y2 * y2)))
+            * (180 / pi), 2)
+        return y_angle
+
+    # 특징점을 가지고 z축을 기준으로 몇도가 기울인지 반환 (절래절래)
     def visual_z_alarm(self):
-        return "이것은 z"
+        std_pose = self.std_pose
+        cur_pose = self.cur_pose
+
+        std_eye_w = std_pose[5][0] - std_pose[4][0]
+        cur_eye_w = cur_pose[5][0] - cur_pose[4][0]
+        temp = cur_eye_w / std_eye_w
+        if temp >= 1.0:
+            temp = 0.999999
+
+        z_angle = math.acos(temp) * (180 / pi)
+        return z_angle
+
+    # 거북목. 상의 크기와 물체의 거리는 반비례.
+    def visual_turtle_alarm(self):
+        std_pose = self.std_pose
+        cur_pose = self.cur_pose
+
+        std_eye_w = std_pose[5][0] - std_pose[4][0]
+        cur_eye_w = cur_pose[5][0] - cur_pose[4][0]
+        std_brow_nose_h = ((std_pose[2][1] + std_pose[3][1]) / 2) - std_pose[6][1]
+        cur_brow_nose_h = ((cur_pose[2][1] + cur_pose[3][1]) / 2) - cur_pose[6][1]
+        std_nose_mouth_h = std_pose[6][1] - std_pose[1][1]
+        cur_nose_mouth_h = cur_pose[6][1] - cur_pose[1][1]
+
+        if abs(std_eye_w) < abs(cur_eye_w) and abs(std_brow_nose_h) < abs(cur_brow_nose_h) and abs(
+                std_nose_mouth_h) < abs(cur_nose_mouth_h):
+            # and std_nose_mouth_h < cur_nose_mouth_h
+            return True
+        return False
 
     # 저장했던 기준 좌표와 현 자세에 따라서 메시지 반환
-    def getMessages(self):
+    def getValues(self):
         status, (frame, shape) = self.faceDetect()
 
         if status in [0, 1]:
@@ -167,15 +200,11 @@ class ImageAnalyzer:
             # TODO 개발자용 코드(1줄 / 개별 창으로 실재 상태를 보이기 위해서 사용)
             self.drawPoints(frame, shape)
 
-            cur_pose = self.getPose(shape)
-            # x_meg = self.visual_x_alarm(self.std_pose[4][1], self.std_pose[5][1],
-            #                             self.cur_pose[4][1], self.cur_pose[5][1], self.std_shape[67][2])
-            x_meg = self.visual_x_alarm()
-            y_meg = self.visual_y_alarm()
-            z_meg = self.visual_z_alarm()
+            self.cur_pose = self.getPose(shape)
 
-            return [x_meg, y_meg, z_meg]
+            x_val = self.visual_x_alarm()
+            y_val = self.visual_y_alarm()
+            z_val = self.visual_z_alarm()
+            turtle_val = self.visual_turtle_alarm()
 
-    # 위의 함수를 이용하여 얼굴 점을 분석해 주는 것 ex 좋음 나쁨
-    def faceAnalyze(self):
-        return
+            return [int(x_val), int(y_val), int(z_val), turtle_val]

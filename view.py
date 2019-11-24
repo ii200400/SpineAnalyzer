@@ -15,7 +15,7 @@
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-import winsound
+from PyQt5 import QtMultimedia
 
 import camera
 
@@ -73,7 +73,6 @@ def setSliderFPS(slider, text, timer):
     fps = slider.value()
     text.setText(str(fps))
 
-    timer.stop()
     timer.start(1000 // fps)
 
 
@@ -424,6 +423,10 @@ class AnalyzerTap(QWidget):
         self.x_label = QLabel('알 수 없음')
         self.y_label = QLabel('알 수 없음')
         self.z_label = QLabel('알 수 없음')
+        self.turtle_label = QLabel('알 수 없음')
+
+        self.player = QtMultimedia.QMediaPlayer()
+        self.turm = 2100
 
         self.timer = QTimer()
         self.alarm_timer = QTimer()
@@ -438,10 +441,14 @@ class AnalyzerTap(QWidget):
             Qt.SmoothTransformation))
         self.status_label.setAlignment(Qt.AlignCenter)
 
-        for label in [self.x_label, self.y_label, self.z_label]:
+        for label in [self.x_label, self.y_label, self.z_label, self.turtle_label]:
             label.setFont(QFont('나눔바른펜', 12, 50))
             label.setStyleSheet("color: #e1effa")
             label.setAlignment(Qt.AlignCenter)
+
+        url = QUrl.fromLocalFile("./sound/WindowsDefault.mp3")
+        content = QtMultimedia.QMediaContent(url)
+        self.player.setMedia(content)
 
         self.alarm_timer.timeout.connect(self.sirenAlarm)
         self.alarm_timer.stop()
@@ -450,9 +457,8 @@ class AnalyzerTap(QWidget):
         self.timer.stop()
 
         vbox = QVBoxLayout()
-        vbox.addWidget(self.x_label)
-        vbox.addWidget(self.y_label)
-        vbox.addWidget(self.z_label)
+        for label in [self.x_label, self.y_label, self.z_label, self.turtle_label]:
+            vbox.addWidget(label)
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.status_label, 1)
@@ -460,18 +466,69 @@ class AnalyzerTap(QWidget):
 
         self.setLayout(hbox)
 
+    def xMessage(self, x_angle):
+        msg = ''
+
+        if x_angle > 95:
+            msg = "Tilt your head " + str(round(x_angle - 90, 2)) + " UP on the x axis"
+        elif x_angle < 85:
+            msg = "Tilt your head " + str(abs(round(x_angle - 90, 2))) + " DOWN on the x axis"
+        else:
+            msg = "head(x axis): OK"
+        return msg
+
+    def yMessage(self, y_angle):
+        msg = ''
+
+        if y_angle > 10:
+            msg = "Tilt your head " + str(y_angle) + " LEFT on the y axis"
+        elif y_angle < -10:
+            msg = "Tilt your head " + str(abs(y_angle)) + " RIGHT on the y axis"
+        else:
+            self.alarm_timer.start(5000)
+            self.turm = 2100
+            meg = "head(y axis): OK"
+        return msg
+
+    def zMessage(self, z_angle):
+        msg = ''
+
+        if z_angle > 10:
+            msg = "Tilt your head " + str(round(z_angle, 2)) + " LEFT on the z axis"
+        elif z_angle < -10:
+            msg = "Tilt your head " + str(abs(round(z_angle, 2))) + " RIGHT on the z axis"
+        else:
+            msg = "head(z axis): OK"
+        return msg
+
+    def turtleMessage(self, isTurtle):
+        if isTurtle:
+            return "now U R turtle neck."
+        else:
+            return "head(turtle neck): OK"
+
     # 자세를 분석한 결과를 메시지로 보여주는 함수
-    # TODO 할수 있으면 애니매이션으로 바꾸자.
+    # TODO 할 수 있으면 애니매이션으로 바꾸자.
     def analyzeImage(self):
-        messages = cameraObject.getMessages()
+        values = cameraObject.getValues()
 
-        self.x_label.setText(messages[0])
-        self.y_label.setText(messages[1])
-        self.z_label.setText(messages[2])
+        if values is not None:
+            self.x_label.setText(self.xMessage(values[0]))
+            self.y_label.setText(self.yMessage(values[1]))
+            self.z_label.setText(self.zMessage(values[2]))
+            self.turtle_label.setText(self.turtleMessage(values[3]))
+        else:
+            self.alarm_timer.start(5000)
+            self.turm = 2100
 
-    # TODO winsound로 고쳐야함
     def sirenAlarm(self):
-        return
+        if self.turm > 500:
+            self.turm -= 100
+
+        self.player.setVolume(volume)
+        self.player.play()
+
+        self.alarm_timer.start(self.turm)
 
 
 # 두번째 탭
