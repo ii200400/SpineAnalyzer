@@ -132,16 +132,18 @@ class ImageAnalyzer:
         std_pose = self.std_pose
         cur_pose = self.cur_pose
         # TODO 임의로 턱의 중앙점을 넣었습니다. 코딩할 때 low_jaw를 고려하지 않아서;;
-        low_jaw = self.std_shape[67 - 59][1]
+        # low_jaw = self.std_shape[67 - 59][1]
 
-        #턱에서 눈(양눈의 평균)까지의 거리
-        std_eye_h = (std_pose[4][1] + std_pose[5][1]) / 2 - low_jaw
-        cur_eye_h = (cur_pose[4][1] + cur_pose[5][1]) / 2 - low_jaw
-        # 눈<->턱아래점(목).
-        length = std_eye_h - low_jaw
+        std_eye_y = (std_pose[2][1] + std_pose[3][1]) / 2
+        cur_eye_y = (cur_pose[2][1] + cur_pose[3][1]) / 2
 
-        x_angle = math.acos(cur_eye_h / length) * (180 / pi)
-        return x_angle
+        # 10%정도 정상범위 제공.
+        if std_eye_y * 1.1 < cur_eye_y:
+            return "head UP plz"
+        elif std_eye_y * 0.9 > cur_eye_y:
+            return "head DOWN plz"
+        else:
+            return " x OK"
 
     # 특징점을 가지고 y축을 기준으로 몇도가 기울인지 반환 (갸웃갸웃)
     def visual_y_alarm(self):
@@ -151,7 +153,7 @@ class ImageAnalyzer:
         x1 = std_pose[4][0] - std_pose[5][0]
         y1 = std_pose[4][1] - std_pose[5][1]
         x2 = cur_pose[4][0] - cur_pose[5][0]
-        y2 = cur_pose[4][1] - cur_pose[5][0]
+        y2 = cur_pose[4][1] - cur_pose[5][1]
         # 우측 값이 라디안이라 180/np.pi 로 360도 값으로 변환.
         y_angle = round(
             math.asin((x1 * y2 - y1 * x2) / (math.sqrt(x1 * x1 + y1 * y1) * math.sqrt(x2 * x2 + y2 * y2)))
@@ -207,4 +209,5 @@ class ImageAnalyzer:
             z_val = self.visual_z_alarm()
             turtle_val = self.visual_turtle_alarm()
 
-            return [int(x_val), int(y_val), int(z_val), turtle_val]
+            # return [int(x_val), int(y_val), int(z_val), turtle_val]
+            return [x_val, int(y_val), int(z_val), turtle_val]

@@ -15,7 +15,7 @@
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from PyQt5 import QtMultimedia
+from pygame import mixer
 
 import camera
 
@@ -168,6 +168,8 @@ class MainView(QWidget):
         cameraObject = camera.ImageAnalyzer()  # 카메라 객체 생성
 
         # 카메라 버튼에 관한 설정
+        self.camera_label.setScaledContents(True)
+
         self.camera_but.setFixedSize(72, 72)
         self.camera_but.setIcon(QIcon('./image/camera.png'))
         self.camera_but.setIconSize(QSize(36, 36))
@@ -425,7 +427,7 @@ class AnalyzerTap(QWidget):
         self.z_label = QLabel('알 수 없음')
         self.turtle_label = QLabel('알 수 없음')
 
-        self.player = QtMultimedia.QMediaPlayer()
+        mixer.init()
         self.turm = 2100
 
         self.timer = QTimer()
@@ -446,9 +448,7 @@ class AnalyzerTap(QWidget):
             label.setStyleSheet("color: #e1effa")
             label.setAlignment(Qt.AlignCenter)
 
-        url = QUrl.fromLocalFile("./sound/WindowsDefault.mp3")
-        content = QtMultimedia.QMediaContent(url)
-        self.player.setMedia(content)
+        mixer.music.load("./sound/WindowsDefault.mp3")
 
         self.alarm_timer.timeout.connect(self.sirenAlarm)
         self.alarm_timer.stop()
@@ -487,7 +487,7 @@ class AnalyzerTap(QWidget):
         else:
             self.alarm_timer.start(5000)
             self.turm = 2100
-            meg = "head(y axis): OK"
+            msg = "head(y axis): OK"
         return msg
 
     def zMessage(self, z_angle):
@@ -512,21 +512,25 @@ class AnalyzerTap(QWidget):
     def analyzeImage(self):
         values = cameraObject.getValues()
 
+        # print(self.alarm_timer.remainingTime())
         if values is not None:
-            self.x_label.setText(self.xMessage(values[0]))
+            # self.x_label.setText(self.xMessage(values[0]))
+            self.x_label.setText(values[0])
             self.y_label.setText(self.yMessage(values[1]))
             self.z_label.setText(self.zMessage(values[2]))
             self.turtle_label.setText(self.turtleMessage(values[3]))
         else:
             self.alarm_timer.start(5000)
             self.turm = 2100
+        # print(self.alarm_timer.remainingTime())
 
     def sirenAlarm(self):
         if self.turm > 500:
             self.turm -= 100
 
-        self.player.setVolume(volume)
-        self.player.play()
+        print(volume)
+        mixer.music.set_volume(volume/100)
+        mixer.music.play()
 
         self.alarm_timer.start(self.turm)
 
@@ -580,7 +584,7 @@ class SettingTap(QWidget):
         self.volume_slider_text.setStyleSheet("background-color: #cccccc; color: #e1effa"
                                               "margin: 10px 2px")
 
-        self.volume_checkbox.stateChanged.connect(self.Mute)
+        self.volume_checkbox.stateChanged.connect(self.mute)
         self.volume_checkbox.setStyleSheet("QCheckBox { "
                                            "font-family: '나눔바른펜'; font-size: 10pt; font-weight: bold; color: #e1effa; }")
 
@@ -604,7 +608,7 @@ class SettingTap(QWidget):
         self.fps_slider.setTickPosition(QSlider.TicksBelow)
         self.fps_slider.setTickInterval(10)
         self.fps_slider.setSliderPosition(fps)
-        self.fps_slider.valueChanged.connect(lambda x: setSliderFPS(self.fps_slider, self.fps_slider_text, self.timer))
+        self.fps_slider.valueChanged.connect(lambda x: self.setVolume('slider'))
         self.fps_slider.setStyleSheet(sliderStyle +
                                       "QSlider::groove:horizontal {" \
                                       "background: #cccccc; position: absolute; top: 11px; bottom: 11px; }" \
@@ -612,7 +616,7 @@ class SettingTap(QWidget):
                                       "width: 8px; background: white; margin: -8px 0px;" \
                                       "border: 1px solid #232d40; border-radius: 4px; }")
 
-        self.fps_slider_text.editingFinished.connect(lambda: pressEnter(self.fps_slider, self.fps_slider_text))
+        self.fps_slider_text.editingFinished.connect(lambda: self.setVolume('text'))
         self.fps_slider_text.setStyleSheet("background-color: #cccccc; color: #e1effa"
                                            "margin: 10px 2px")
 
@@ -628,8 +632,17 @@ class SettingTap(QWidget):
         vbox.addWidget(FPS_group)
         self.setLayout(vbox)
 
+    def setVolume(self, mode):
+        print('why?')
+        if mode == 'slider':
+            setSliderFPS(self.fps_slider, self.fps_slider_text, self.timer)
+        elif mode == 'text':
+            pressEnter(self.fps_slider, self.fps_slider_text)
+
+        print(volume)
+
     # 음소거 버튼을 위한 함수, 누르면 비활성화/활성화가 된다.
-    def Mute(self):
+    def mute(self):
         global volume
 
         if self.volume_checkbox.isChecked():
