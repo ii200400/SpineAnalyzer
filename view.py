@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import *
 from pygame import mixer
 
 import camera
+import posePainter
 
 
 class MainView(object):
@@ -421,7 +422,7 @@ class AnalyzerTap(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.status_label = QLabel()    # 사용자 상태를 반영하는 이미지
+        self.status_label = posePainter.FrontPose()    # 사용자 상태를 반영하는 이미지
         self.x_label = QLabel('알 수 없음')
         self.y_label = QLabel('알 수 없음')
         self.z_label = QLabel('알 수 없음')
@@ -436,17 +437,14 @@ class AnalyzerTap(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.status_label.setPixmap(QPixmap('./image/man.png').scaled(
-            self.width() // 4,
-            self.height() // 4,
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation))
+        self.status_label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
         self.status_label.setAlignment(Qt.AlignCenter)
 
         for label in [self.x_label, self.y_label, self.z_label, self.turtle_label]:
             label.setFont(QFont('나눔바른펜', 12, 50))
             label.setStyleSheet("color: #e1effa")
             label.setAlignment(Qt.AlignCenter)
+            label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
 
         mixer.music.load("./sound/WindowsDefault.mp3")
 
@@ -510,10 +508,12 @@ class AnalyzerTap(QWidget):
     # 자세를 분석한 결과를 메시지로 보여주는 함수
     # TODO 할 수 있으면 애니매이션으로 바꾸자.
     def analyzeImage(self):
-        values = cameraObject.getValues()
+        values, points = cameraObject.getValues()
 
         # print(self.alarm_timer.remainingTime())
         if values is not None:
+            self.status_label.setShape(points)
+
             # self.x_label.setText(self.xMessage(values[0]))
             self.x_label.setText(values[0])
             self.y_label.setText(self.yMessage(values[1]))
@@ -536,6 +536,7 @@ class AnalyzerTap(QWidget):
 
 
 # 두번째 탭
+# TODO 종료 혹은 이전 화면으로 돌아가는 버튼 필요
 class SettingTap(QWidget):
 
     #사용할 위젯 생성
@@ -572,7 +573,7 @@ class SettingTap(QWidget):
         self.volume_slider.setTickPosition(QSlider.TicksBelow)
         self.volume_slider.setTickInterval(10)
         self.volume_slider.setSliderPosition(volume)
-        self.volume_slider.valueChanged.connect(lambda x: setSliderVolume(self.volume_slider, self.volume_slider_text))
+        self.volume_slider.valueChanged.connect(lambda x: self.setVolume('slider'))
         self.volume_slider.setStyleSheet(sliderStyle +
                                          "QSlider::groove:horizontal {" \
                                          "background: #cccccc; position: absolute; top: 7px; bottom: 7px; }" \
@@ -580,7 +581,7 @@ class SettingTap(QWidget):
                                          "width: 8px; background: white; margin: -13px 0px;" \
                                          "border: 1px solid #232d40; border-radius: 4px; }")
 
-        self.volume_slider_text.editingFinished.connect(lambda: pressEnter(self.volume_slider, self.volume_slider_text))
+        self.volume_slider_text.editingFinished.connect(lambda: self.setVolume('text'))
         self.volume_slider_text.setStyleSheet("background-color: #cccccc; color: #e1effa"
                                               "margin: 10px 2px")
 
@@ -608,7 +609,7 @@ class SettingTap(QWidget):
         self.fps_slider.setTickPosition(QSlider.TicksBelow)
         self.fps_slider.setTickInterval(10)
         self.fps_slider.setSliderPosition(fps)
-        self.fps_slider.valueChanged.connect(lambda x: self.setVolume('slider'))
+        self.fps_slider.valueChanged.connect(lambda x: setSliderFPS(self.fps_slider, self.fps_slider_text, self.timer))
         self.fps_slider.setStyleSheet(sliderStyle +
                                       "QSlider::groove:horizontal {" \
                                       "background: #cccccc; position: absolute; top: 11px; bottom: 11px; }" \
@@ -616,7 +617,7 @@ class SettingTap(QWidget):
                                       "width: 8px; background: white; margin: -8px 0px;" \
                                       "border: 1px solid #232d40; border-radius: 4px; }")
 
-        self.fps_slider_text.editingFinished.connect(lambda: self.setVolume('text'))
+        self.fps_slider_text.editingFinished.connect(lambda: pressEnter(self.fps_slider, self.fps_slider_text))
         self.fps_slider_text.setStyleSheet("background-color: #cccccc; color: #e1effa"
                                            "margin: 10px 2px")
 
@@ -633,13 +634,10 @@ class SettingTap(QWidget):
         self.setLayout(vbox)
 
     def setVolume(self, mode):
-        print('why?')
-        if mode == 'slider':
-            setSliderFPS(self.fps_slider, self.fps_slider_text, self.timer)
-        elif mode == 'text':
-            pressEnter(self.fps_slider, self.fps_slider_text)
-
-        print(volume)
+        if mode == "slider":
+            setSliderVolume(self.volume_slider, self.volume_slider_text)
+        elif mode == "text":
+            pressEnter(self.volume_slider, self.volume_slider_text)
 
     # 음소거 버튼을 위한 함수, 누르면 비활성화/활성화가 된다.
     def mute(self):

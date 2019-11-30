@@ -9,10 +9,8 @@ pi = math.pi
 
 
 class ImageAnalyzer:
-    # TODO 카메라 연결 상태에 따라서 필러그가 뽑혔을 때 다시 연결을 계속 시도해보도록 하려고 했는데 어렵다;;
     def __init__(self):
         self.cam = cv2.VideoCapture(0)  # 카메라 지정 웹캠이 안되면 아래의 파일을 임시로 사용하겠다.
-        # self.cam = cv2.VideoCapture("./example.mp4")
 
         self.detector = dlib.get_frontal_face_detector()  # 얼굴인식 모델
         self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")  # 얼굴 특징점 모델
@@ -22,7 +20,7 @@ class ImageAnalyzer:
 
         self.std_pose = []  # 기준 자세 리스트
         self.cur_pose = []  # 현재 자세 리스트
-        # TODO 타이머는 view에서 하자.
+
         self.base_time = -1
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -35,7 +33,6 @@ class ImageAnalyzer:
         ret, frame = self.cam.read()
         frame = imutils.resize(frame, width=800)
 
-        # TODO ret이 언제 false가 되는지를 잘 모르겠다;
         # 카메라는 연결이 되어있는데 어떤 이유로 이미지를 불러오지 못하면 false가 나오기는 한다.
         if not ret:
             print('아이고..')
@@ -44,7 +41,7 @@ class ImageAnalyzer:
         # 얼굴 인식
         faces = self.detector(frame)
         if len(faces) == 0:  # 인식되는 얼굴이 없는 경우
-            #TODO 개발자용 코드
+            # TODO 개발자용 코드
             cv2.imshow("Frame", frame)
             return 1, (frame, None)
 
@@ -63,7 +60,7 @@ class ImageAnalyzer:
 
         # 특징점들의 그룹과 그룹의 범위
         for (name, (i, j)) in face_utils.FACIAL_LANDMARKS_IDXS.items():
-            #TODO 개발자 용 코드(1줄)
+            # TODO 개발자 용 코드(1줄)
             meanx, meany, count = 0, 0, 0
 
             # 얼굴 특징점에 점 그리기
@@ -106,6 +103,18 @@ class ImageAnalyzer:
 
         return avePoints
 
+    def getFaceInfo(self, shape):
+        left, right, top = 9999, 0, 9999
+
+        for name, (i, j) in imutils.face_utils.FACIAL_LANDMARKS_IDXS.items():
+            if name in ["right_eyebrow", "left_eyebrow", "jaw"]:
+                for (x, y) in shape[i:j]:
+                    if left > x: left = x
+                    if right < x: right = x
+                    if top > y: top = y
+
+        return [left, top, right - left]
+
     # facedetect함수의 결과에 따라서 다른 이미지를 반환하는 함수 (view의 MainView클래스의 showImage함수에서 쓰인다.)
     def setFrame(self):
         status, (frame, shape) = self.faceDetect()
@@ -125,14 +134,12 @@ class ImageAnalyzer:
         self.std_pose = self.getPose(self.std_shape)
         return
 
-    # 0-mouth (0,1), 1-inner mouth(2,3), 2-right eyebrow(4,5), 3-left eyebrow(6,7)
-    # 4-right eye(8,9), 5-left eye(10,11), 6-nose(12,13), 7-jaw(14,15)
+    # 0-mouth (0,1), 1-inner_mouth(2,3), 2-right_eyebrow(4,5), 3-left_eyebrow(6,7)
+    # 4-right_eye(8,9), 5-left_eye(10,11), 6-nose(12,13), 7-jaw(14,15)
     # 특징점을 가지고 x축을 기준으로 몇도가 기울인지 반환 (끄덕끄덕)
     def visual_x_alarm(self):
         std_pose = self.std_pose
         cur_pose = self.cur_pose
-        # TODO 임의로 턱의 중앙점을 넣었습니다. 코딩할 때 low_jaw를 고려하지 않아서;;
-        # low_jaw = self.std_shape[67 - 59][1]
 
         std_eye_y = (std_pose[2][1] + std_pose[3][1]) / 2
         cur_eye_y = (cur_pose[2][1] + cur_pose[3][1]) / 2
@@ -197,12 +204,20 @@ class ImageAnalyzer:
         status, (frame, shape) = self.faceDetect()
 
         if status in [0, 1]:
-            return None
+            return None, None
+
         elif status == 2:
             # TODO 개발자용 코드(1줄 / 개별 창으로 실재 상태를 보이기 위해서 사용)
             self.drawPoints(frame, shape)
 
             self.cur_pose = self.getPose(shape)
+
+            face_info = self.getFaceInfo(shape)
+            eye_points = [self.cur_pose[4], self.cur_pose[5]]
+            nose_points = [shape[27], shape[30], shape[33]]
+            mouse_points = [shape[48], shape[54]]
+            # face info, [right eye, left eye], nose points, mouse points
+            points = [face_info, eye_points, nose_points, mouse_points]
 
             x_val = self.visual_x_alarm()
             y_val = self.visual_y_alarm()
@@ -210,4 +225,4 @@ class ImageAnalyzer:
             turtle_val = self.visual_turtle_alarm()
 
             # return [int(x_val), int(y_val), int(z_val), turtle_val]
-            return [x_val, int(y_val), int(z_val), turtle_val]
+            return [x_val, int(y_val), int(z_val), turtle_val], points
