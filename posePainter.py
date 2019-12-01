@@ -1,11 +1,16 @@
-from PyQt5.QtGui import QPainter, QPainterPath, QPen, QColor, QResizeEvent
+from PyQt5.QtGui import *
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtWidgets import QLabel
+import math
 
-snow = QColor()
-snow.setNamedColor("#e1effa")
-gray = QColor()
-gray.setNamedColor("#558c8c8c")
+pi = math.pi
+
+baseColor = QColor()
+baseColor.setNamedColor("#232d40")
+snowColor = QColor()
+snowColor.setNamedColor("#e1effa")
+grayColor = QColor()
+grayColor.setNamedColor("#558c8c8c")
 
 
 # 절레절레와 갸웃갸웃을 그려주는 클래스
@@ -39,7 +44,7 @@ class FrontPose(QLabel):
         self.y = (h // 2) - self.radius
 
     # 기준 사진의 포인트들을 저장한다.
-    def setStandardPoint(self, points):
+    def saveStandardShape(self, points):
         self.std_points = points
 
     # 기준 사진의 눈, 코, 입 좌표를 뷰에서 볼 수 있도록 정규화 한다.
@@ -108,7 +113,7 @@ class FrontPose(QLabel):
         y = self.y
 
         qp = QPainter(self)
-        qp.setPen(QPen(snow, 4, Qt.SolidLine))
+        qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
 
         # 얼굴 경계선
         qp.drawEllipse(x, y, radius * 2, radius * 2)  # (x, y, w, h)
@@ -117,10 +122,10 @@ class FrontPose(QLabel):
             self.setStandardShape()
             self.drawBase(qp)
         else:
-            qp.setPen(QPen(gray, 4, Qt.SolidLine))
+            qp.setPen(QPen(grayColor, 4, Qt.SolidLine))
             self.drawBase(qp)
 
-            qp.setPen(QPen(snow, 4, Qt.SolidLine))
+            qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
 
             # 눈
             for point in self.eye_points:
@@ -158,7 +163,7 @@ class SidePose(QLabel):
 
         self.w, self.h = 0, 0   # 현 위젯의 가로/세로(w, h)
         self.radius = 0         # 얼굴 반지름
-        self.x, self.y, self.leng = 0, 0, 0    # 허리 시작점과 길이
+        self.root_x, self.root_y, self.leng = 0, 0, 0    # 허리 시작점과 길이
 
         self.face_deg = None
         self.spine_deg = None
@@ -169,22 +174,50 @@ class SidePose(QLabel):
         w = self.w
         h = self.h
 
-        self.radius = h * 2 // 15
+        self.radius = h // 15 * 2
         
-        self.leng = h * 6 // 15
-        self.x = w // 2
-        self.y = h * 5 // 6
+        self.leng = h // 15 * 6
+        self.root_x = w // 2
+        self.root_y = h // 6 * 5
 
     # 기준 자세를 그려주는 함수
     def drawBase(self, qp):
         w, h = self.w, self.h
-        x, y = self.x, self.y
+        root_x, root_y, leng = self.root_x, self.root_y, self.leng
         radius = self.radius
 
-        # 얼굴 (QPoint:center, rx, ry)
-        qp.drawEllipse(QPoint(w // 2, h * 3 // 10), radius, radius)
         # 허리
-        qp.drawLine(x, y, x, h * 6 // 15)
+        # TODO 곡선이 될 수 있도록 만들기
+        qp.drawLine(root_x, root_y, root_x, root_y - leng)
+
+        face_x = w // 2
+        face_y = root_y - leng - radius
+
+        # 얼굴 (QPoint:center, rx, ry)
+        qp.drawEllipse(QPoint(face_x, face_y), radius, radius)
+        # 눈
+        eye_x = int(face_x + math.cos(-pi/4) * radius // 2)
+        eye_y = int(face_y + math.sin(-pi/4) * radius // 2)
+        qp.drawEllipse(QPoint(eye_x, eye_y), 2, 2)  # (center:QPoint, rx, ry)
+        # 코
+        nose_x = int(face_x + math.cos(-pi/18) * radius + 2)
+        nose_y = int(face_y + math.sin(-pi/18) * radius + 2)
+        qp.drawEllipse(QPoint(nose_x, nose_y), 2, 2)  # (center:QPoint, rx, ry)
+        # 입
+        # TODO 곡선이 될 수 있도록 만들기
+        start_x = int(face_x + math.cos(pi/3) * radius / 2 - 1)
+        start_y = int(face_y + math.sin(pi/3) * radius / 2 - 1)
+        end_x = int(face_x + math.cos(pi/4) * radius + 1)
+        end_y = int(face_y + math.sin(pi/4) * radius + 1)
+        mid_x = int((start_x + end_x) / 2 + (start_y - end_y) / 2)
+        mid_y = int((start_y + end_y) / 2 - (start_x - end_x) / 2)
+        # 웃는 입 모양 그리기
+        path = QPainterPath()
+        path.moveTo(QPoint(start_x, start_y))
+        path.cubicTo(QPoint(start_x, start_y),
+                     QPoint(mid_x, mid_y),
+                     QPoint(end_x, end_y))
+        qp.drawPath(path)
 
     def paintEvent(self, event):
         super().paintEvent(event)
@@ -192,10 +225,13 @@ class SidePose(QLabel):
         qp = QPainter(self)
 
         if self.face_deg is None:  # 창이 만들어진 직후 한번만 불린다.
-            qp.setPen(QPen(snow, 4, Qt.SolidLine))
+            qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
             self.drawBase(qp)
+
+            self.face_deg = 0
+            self.spine_deg = 30
         else:
-            qp.setPen(QPen(gray, 4, Qt.SolidLine))
+            qp.setPen(QPen(grayColor, 4, Qt.SolidLine))
             self.drawBase(qp)
 
             self.update()

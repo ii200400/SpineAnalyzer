@@ -420,7 +420,7 @@ class MoniterView(QDialog):
 
 
 # 첫번째 탭
-# TODO 뷰 수정 요망
+# TODO 애니메이션 위 라벨 추가 해야함
 class AnalyzerTap(QWidget):
 
     def __init__(self):
@@ -476,7 +476,7 @@ class AnalyzerTap(QWidget):
 
     # 창이 생겨나기전 값 초기화
     def showEvent(self, a0: QShowEvent) -> None:
-        self.status_front.setStandardPoint(cameraObject.getFrontShape())
+        self.status_front.saveStandardShape(cameraObject.getFrontShape())
 
         self.timer.start(1000 // fps)
         self.alarm_timer.start(5000)
