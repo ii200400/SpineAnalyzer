@@ -21,8 +21,6 @@ class ImageAnalyzer:
         self.std_pose = []  # 기준 자세 리스트
         self.cur_pose = []  # 현재 자세 리스트
 
-        self.base_time = -1
-
     def __exit__(self, exc_type, exc_val, exc_tb):
         print('!!')
         self.cam.release()
@@ -133,6 +131,20 @@ class ImageAnalyzer:
     def setStandardPose(self):
         self.std_pose = self.getPose(self.std_shape)
         return
+
+    def getFrontShape(self):
+        shape = self.std_shape
+        face_info = self.getFaceInfo(shape)
+        eye_points = [self.std_pose[4], self.std_pose[5]]
+        nose_points = [shape[27], shape[30], shape[33]]
+        mouse_points = [shape[48], shape[54]]
+        # face info, [right eye, left eye], nose points, mouse points
+        points = [face_info, eye_points, nose_points, mouse_points]
+
+        return points
+
+    def getSideShape(self):
+        shape = self.std_shape
 
     # 0-mouth (0,1), 1-inner_mouth(2,3), 2-right_eyebrow(4,5), 3-left_eyebrow(6,7)
     # 4-right_eye(8,9), 5-left_eye(10,11), 6-nose(12,13), 7-jaw(14,15)

@@ -161,6 +161,8 @@ class MainView(QWidget):
 
         self.timer = QTimer()   # 카메라 영상을 갱신할 때 사용하는 타이머
 
+        self.isface = False     # 카메라에 얼굴이 탐색 되었는지
+
         self.initUI()
 
     def initUI(self):
@@ -310,8 +312,7 @@ class MainView(QWidget):
                               "QMessageBox QPushButton:pressed { background-color: #8c8c8c; }")
         message.setWindowFlags(Qt.WindowTitleHint)
 
-        status = self.showImage()
-        if status in [0, 1]:
+        if not self.isface:
             message.setWindowTitle("Warning")
             message.setText("얼굴이 인식되지 않았습니다.\n다시 찍어주세요.")
             message.setIcon(QMessageBox.Warning)
@@ -322,7 +323,7 @@ class MainView(QWidget):
 
             self.timer.start(1000 // fps)
 
-        elif status == 2:
+        else:
             message.setWindowTitle("Confirm")
             message.setText("이 사진으로 하시겠습니까?")
             message.setIcon(QMessageBox.Question)
@@ -337,8 +338,6 @@ class MainView(QWidget):
 
                 self.hide()
 
-                moniterView.analyzeTap.timer.start(1000 // fps)
-                moniterView.analyzeTap.alarm_timer.start(5000)
                 moniterView.show()
             else:                           # 취소 버튼을 눌렀다면 타이머를 다시 시작한다.
                 self.timer.start(1000 // fps)
@@ -362,6 +361,11 @@ class MainView(QWidget):
                 self.height(),
                 Qt.KeepAspectRatio,
                 Qt.SmoothTransformation)
+
+        if status == 2:
+            self.isface = True
+        else:
+            self.isface = False
 
         self.camera_label.setPixmap(pix)
         return status
@@ -411,8 +415,8 @@ class MoniterView(QDialog):
         self.setWindowTitle('SpineAnalyzer')
         self.setWindowIcon(QIcon('./image/broken-neck.png'))
         screen = QDesktopWidget().screenGeometry()
-        self.setGeometry(screen.width() - 400, screen.height() - 350, 400, 300)
-        self.setFixedSize(400, 300)
+        self.setGeometry(0, screen.height() - 350, 600, 300)
+        self.setFixedSize(600, 300)
 
 
 # 첫번째 탭
@@ -422,7 +426,9 @@ class AnalyzerTap(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.status_label = posePainter.FrontPose()    # 사용자 상태를 반영하는 이미지
+        self.status_front = posePainter.FrontPose()    # 사용자 상태를 반영하는 애니메이션
+        self.status_side = posePainter.SidePose()    # 사용자 상태를 반영하는 이미지
+
         self.x_label = QLabel('알 수 없음')
         self.y_label = QLabel('알 수 없음')
         self.z_label = QLabel('알 수 없음')
@@ -437,8 +443,11 @@ class AnalyzerTap(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.status_label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
-        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_front.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
+        self.status_front.setAlignment(Qt.AlignCenter)
+
+        self.status_side.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
+        self.status_side.setAlignment(Qt.AlignCenter)
 
         for label in [self.x_label, self.y_label, self.z_label, self.turtle_label]:
             label.setFont(QFont('나눔바른펜', 12, 50))
@@ -459,10 +468,22 @@ class AnalyzerTap(QWidget):
             vbox.addWidget(label)
 
         hbox = QHBoxLayout()
-        hbox.addWidget(self.status_label, 1)
+        hbox.addWidget(self.status_side, 1)
+        hbox.addWidget(self.status_front, 1)
         hbox.addLayout(vbox, 1)
 
         self.setLayout(hbox)
+
+    # 창이 생겨나기전 값 초기화
+    def showEvent(self, a0: QShowEvent) -> None:
+        self.status_front.setStandardPoint(cameraObject.getFrontShape())
+
+        self.timer.start(1000 // fps)
+        self.alarm_timer.start(5000)
+
+    #창이 사라지기 전 값 삭제
+    def hideEvent(self, a0: QHideEvent) -> None:
+        self.status_front.clear()
 
     def xMessage(self, x_angle):
         msg = ''
@@ -512,7 +533,9 @@ class AnalyzerTap(QWidget):
 
         # print(self.alarm_timer.remainingTime())
         if values is not None:
-            self.status_label.setShape(points)
+            # TODO 상태에 따라서 컴퓨터 알림창을 띄울 수 있도록 하자.
+
+            self.status_front.setShape(points)
 
             # self.x_label.setText(self.xMessage(values[0]))
             self.x_label.setText(values[0])
@@ -536,7 +559,7 @@ class AnalyzerTap(QWidget):
 
 
 # 두번째 탭
-# TODO 종료 혹은 이전 화면으로 돌아가는 버튼 필요
+# TODO 종료 혹은 이전 화면으로 돌아가는 버튼 필요 / 창을 가장 위에 놓을지 말지 설정하는 체크박스 만들기
 class SettingTap(QWidget):
 
     #사용할 위젯 생성
