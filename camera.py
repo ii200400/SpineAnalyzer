@@ -245,20 +245,21 @@ class ImageAnalyzer:
 #값 비율은 x, y, z, turtle 순서대로 30 30 30 40.
     def getStability(self, x_msg, y_angle, z_angle, IsTurtle):
         stability = 100
+        
         if x_msg != "x OK":
-            stability -= 15
-            
-        if abs(y_angle) > 30:
-            stability -= 30
-        elif abs(y_angle) > 10:
-            stability -= 15
-            
-        if abs(z_angle) > 30:
-            stability -= 30
-        elif abs(z_angle) > 10:
-            stability -= 15
+            stability -= 20
+        
+        #각도-점수 좌표계의 1차 방정식. (10, 0) (30, 30)
+        #1.5x - 15 = y. y가 뺄 점수, x가 입력 각도.
+        if abs(y_angle) > 10:
+            stability -= (abs(y_angle) * 1.5) - 15
+              
+        if abs(z_angle) > 10:
+            stability -= (abs(z_angle) * 1.5) - 15
+
             
         if IsTurtle == True:
-            stability -= 40
+            stability -= 30
             
-        return stability
+        return int(stability)
+    

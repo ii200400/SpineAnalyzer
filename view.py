@@ -538,6 +538,7 @@ class AnalyzerTap(QWidget):
             self.status_front.setShape(points)
 
 #            self.x_label.setText(values[0])
+            #임시로 x축 표시하는데다가 stability 점수 표
             self.x_label.setText(self.yMessage(values[4]))
             self.y_label.setText(self.yMessage(values[1]))
             self.z_label.setText(self.zMessage(values[2]))
