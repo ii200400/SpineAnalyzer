@@ -537,11 +537,12 @@ class AnalyzerTap(QWidget):
 
             self.status_front.setShape(points)
 
-            # self.x_label.setText(self.xMessage(values[0]))
-            self.x_label.setText(values[0])
+#            self.x_label.setText(values[0])
+            self.x_label.setText(self.yMessage(values[4]))
             self.y_label.setText(self.yMessage(values[1]))
             self.z_label.setText(self.zMessage(values[2]))
             self.turtle_label.setText(self.turtleMessage(values[3]))
+            
         else:
             self.alarm_timer.start(5000)
             self.turm = 2100

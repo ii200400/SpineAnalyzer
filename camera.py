@@ -162,7 +162,7 @@ class ImageAnalyzer:
         elif std_eye_y * 0.9 > cur_eye_y:
             return "head DOWN plz"
         else:
-            return " x OK"
+            return "x OK"
 
     # 특징점을 가지고 y축을 기준으로 몇도가 기울인지 반환 (갸웃갸웃)
     def visual_y_alarm(self):
@@ -213,6 +213,7 @@ class ImageAnalyzer:
 
     # 저장했던 기준 좌표와 현 자세에 따라서 메시지 반환
     def getValues(self):
+        stability = 0
         status, (frame, shape) = self.faceDetect()
 
         if status in [0, 1]:
@@ -235,6 +236,29 @@ class ImageAnalyzer:
             y_val = self.visual_y_alarm()
             z_val = self.visual_z_alarm()
             turtle_val = self.visual_turtle_alarm()
+            stability = self.getStability(x_val, y_val, z_val, turtle_val)
 
             # return [int(x_val), int(y_val), int(z_val), turtle_val]
-            return [x_val, int(y_val), int(z_val), turtle_val], points
+            return [x_val, int(y_val), int(z_val), turtle_val, stability], points
+
+#일단 수치가 없는 x, turtle는 일괄적으로 점수를 감소, y, z는 각에 따라 감소
+#값 비율은 x, y, z, turtle 순서대로 30 30 30 40.
+    def getStability(self, x_msg, y_angle, z_angle, IsTurtle):
+        stability = 100
+        if x_msg != "x OK":
+            stability -= 15
+            
+        if abs(y_angle) > 30:
+            stability -= 30
+        elif abs(y_angle) > 10:
+            stability -= 15
+            
+        if abs(z_angle) > 30:
+            stability -= 30
+        elif abs(z_angle) > 10:
+            stability -= 15
+            
+        if IsTurtle == True:
+            stability -= 40
+            
+        return stability
