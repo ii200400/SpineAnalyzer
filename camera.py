@@ -156,13 +156,20 @@ class ImageAnalyzer:
         std_eye_y = (std_pose[2][1] + std_pose[3][1]) / 2
         cur_eye_y = (cur_pose[2][1] + cur_pose[3][1]) / 2
 
+        #stability 계산을 위한 높이 변화 비율. 대략 40%가 최대치. 4/10.
+        height_dif_per = abs((std_eye_y - cur_eye_y)/std_eye_y)
+        
+        #stability 값이 음수로 가는 것을 방지하기 위해 최대값 지정.
+        if height_dif_per > 0.4:
+            height_dif_per = 0.4
+        
         # 10%정도 정상범위 제공.
-        if std_eye_y * 1.1 < cur_eye_y:
-            return "head UP plz"
+        if std_eye_y * 1.05 < cur_eye_y:
+            return "head UP plz", height_dif_per
         elif std_eye_y * 0.9 > cur_eye_y:
-            return "head DOWN plz"
+            return "head DOWN plz", height_dif_per
         else:
-            return "x OK"
+            return "x OK", height_dif_per
 
     # 특징점을 가지고 y축을 기준으로 몇도가 기울인지 반환 (갸웃갸웃)
     def visual_y_alarm(self):
@@ -204,12 +211,19 @@ class ImageAnalyzer:
         cur_brow_nose_h = ((cur_pose[2][1] + cur_pose[3][1]) / 2) - cur_pose[6][1]
         std_nose_mouth_h = std_pose[6][1] - std_pose[1][1]
         cur_nose_mouth_h = cur_pose[6][1] - cur_pose[1][1]
+        
 
         if abs(std_eye_w) < abs(cur_eye_w) and abs(std_brow_nose_h) < abs(cur_brow_nose_h) and abs(
                 std_nose_mouth_h) < abs(cur_nose_mouth_h):
             # and std_nose_mouth_h < cur_nose_mouth_h
-            return True
-        return False
+            #보통 값이 0.3까지 올라간다. 극단적인 경우 1.0까지 감.
+            length_dif_per = (abs((std_eye_w - cur_eye_w)/std_eye_w)/3) + (abs((std_brow_nose_h - cur_brow_nose_h)/std_brow_nose_h)/3) + (abs((std_nose_mouth_h - cur_nose_mouth_h)/std_nose_mouth_h)/3)
+                    #stability 값이 음수로 가는 것을 방지하기 위해 최대값 지정.
+            if length_dif_per > 0.5:
+                length_dif_per = 0.5
+                
+            return True, length_dif_per
+        return False, 0
 
     # 저장했던 기준 좌표와 현 자세에 따라서 메시지 반환
     def getValues(self):
@@ -232,22 +246,22 @@ class ImageAnalyzer:
             # face info, [right eye, left eye], nose points, mouse points
             points = [face_info, eye_points, nose_points, mouse_points]
 
-            x_val = self.visual_x_alarm()
+            temp, x_val = self.visual_x_alarm()
             y_val = self.visual_y_alarm()
             z_val = self.visual_z_alarm()
-            turtle_val = self.visual_turtle_alarm()
-            stability = self.getStability(x_val, y_val, z_val, turtle_val)
+            turtle_val, turtle_per = self.visual_turtle_alarm()
+            stability = self.getStability(x_val, y_val, z_val, turtle_per)
 
             # return [int(x_val), int(y_val), int(z_val), turtle_val]
             return [x_val, int(y_val), int(z_val), turtle_val, stability], points
 
 #일단 수치가 없는 x, turtle는 일괄적으로 점수를 감소, y, z는 각에 따라 감소
 #값 비율은 x, y, z, turtle 순서대로 30 30 30 40.
-    def getStability(self, x_msg, y_angle, z_angle, IsTurtle):
+    def getStability(self, x_per, y_angle, z_angle, turtle_per):
         stability = 100
         
-        if x_msg != "x OK":
-            stability -= 20
+        if x_per != 0:
+            stability -= x_per * 75
         
         #각도-점수 좌표계의 1차 방정식. (10, 0) (30, 30)
         #1.5x - 15 = y. y가 뺄 점수, x가 입력 각도.
@@ -256,10 +270,9 @@ class ImageAnalyzer:
               
         if abs(z_angle) > 10:
             stability -= (abs(z_angle) * 1.5) - 15
-
             
-        if IsTurtle == True:
-            stability -= 30
+        if turtle_per != 0:
+            stability -= turtle_per * 100
             
         return int(stability)
     
