@@ -114,7 +114,7 @@ class ImageAnalyzer:
         return [left, top, right - left]
 
     # facedetect함수의 결과에 따라서 다른 이미지를 반환하는 함수 (view의 MainView클래스의 showImage함수에서 쓰인다.)
-    def setFrame(self):
+    def getFrame(self):
         status, (frame, shape) = self.faceDetect()
 
         if status == 0:

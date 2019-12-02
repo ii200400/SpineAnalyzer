@@ -344,7 +344,7 @@ class MainView(QWidget):
 
     # 카메라 객체에서 이미지를 받아와서 뷰 화면에서 보이도록 한다.
     def showImage(self):
-        status, frame = cameraObject.setFrame()
+        status, frame = cameraObject.getFrame()
 
         if status == 0:         # 이미지가 반환되지 않았을 때
             pix = QPixmap('./image/disconnected').scaled(
@@ -527,7 +527,6 @@ class AnalyzerTap(QWidget):
             return "head(turtle neck): OK"
 
     # 자세를 분석한 결과를 메시지로 보여주는 함수
-    # TODO 할 수 있으면 애니매이션으로 바꾸자.
     def analyzeImage(self):
         values, points = cameraObject.getValues()
 
@@ -536,6 +535,7 @@ class AnalyzerTap(QWidget):
             # TODO 상태에 따라서 컴퓨터 알림창을 띄울 수 있도록 하자.
 
             self.status_front.setShape(points)
+            # self.status_side.setDegree() TODO
 
             # self.x_label.setText(self.xMessage(values[0]))
             self.x_label.setText(values[0])
