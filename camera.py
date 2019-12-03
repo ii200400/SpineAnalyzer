@@ -29,6 +29,8 @@ class ImageAnalyzer:
     # 이미지 존재여부와 이미지 자체와 이미지의 특징점을 반환하는 함수
     def faceDetect(self):
         ret, frame = self.cam.read()
+        #좌우반전.
+        frame = cv2.flip(frame, 1)
         frame = imutils.resize(frame, width=800)
 
         # 카메라는 연결이 되어있는데 어떤 이유로 이미지를 불러오지 못하면 false가 나오기는 한다.
