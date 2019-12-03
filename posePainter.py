@@ -12,6 +12,34 @@ snowColor.setNamedColor("#e1effa")
 grayColor = QColor()
 grayColor.setNamedColor("#558c8c8c")
 
+yellowColor = QColor()
+yellowColor.setNamedColor("#ffff33")
+orangeColor = QColor()
+orangeColor.setNamedColor("#ff9933")
+redColor = QColor()
+redColor.setNamedColor("#ff3333")
+
+
+def getColor(score):
+    if score <= 33:
+        per = score * 3 / 100
+        red = int(per * orangeColor.red() + (1 - per) * redColor.red())
+        green = int(per * orangeColor.green() + (1 - per) * redColor.green())
+        blue = int(per * orangeColor.blue() + (1 - per) * redColor.blue())
+    elif score <= 66:
+        per = (score - 33) * 3 / 100
+        red = int(per * yellowColor.red() + (1 - per) * orangeColor.red())
+        green = int(per * yellowColor.green() + (1 - per) * orangeColor.green())
+        blue = int(per * yellowColor.blue() + (1 - per) * orangeColor.blue())
+    else:
+        per = (score - 66) * 3 / 100
+        red = int(per * snowColor.red() + (1 - per) * yellowColor.red())
+        green = int(per * snowColor.green() + (1 - per) * yellowColor.green())
+        blue = int(per * snowColor.blue() + (1 - per) * yellowColor.blue())
+
+    print(red, green, blue)
+    return QColor().fromRgb(red, green, blue)
+
 
 # 절레절레와 갸웃갸웃을 그려주는 클래스
 class FrontPose(QLabel):
@@ -30,6 +58,8 @@ class FrontPose(QLabel):
         self.eye_points = None
         self.nose_points = None
         self.mouse_points = None
+
+        self.score = 100
 
     # 크기가 바뀔 때 마다 값 크기에 맞게 설정한다.
     def resizeEvent(self, a0: QResizeEvent) -> None:
@@ -82,8 +112,13 @@ class FrontPose(QLabel):
 
         return temp
 
+    def setScore(self, score):
+        self.score = score
+
     # 기준 사진을 연하게 그려주는 함수
     def drawBase(self, qp):
+        # 얼굴 경계선
+        qp.drawEllipse(self.x, self.y, self.radius * 2, self.radius * 2)  # (x, y, w, h)
         # 눈
         for point in self.std_eye:
             qp.drawEllipse(QPoint(point[0], point[1]), 2, 2)  # (center:QPoint, rx, ry)
@@ -105,6 +140,8 @@ class FrontPose(QLabel):
         qp.drawPath(path)
 
     def drawFrontPose(self, qp, score=100):
+        # 얼굴 경계선
+        qp.drawEllipse(self.x, self.y, self.radius * 2, self.radius * 2)  # (x, y, w, h)
         # 눈
         for point in self.eye_points:
             qp.drawEllipse(QPoint(point[0], point[1]), 2, 2)  # (center:QPoint, rx, ry)
@@ -132,26 +169,18 @@ class FrontPose(QLabel):
     def paintEvent(self, event):
         super().paintEvent(event)
 
-        radius = self.radius
-        x = self.x
-        y = self.y
-
         qp = QPainter(self)
-        qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
-
-        # 얼굴 경계선
-        qp.drawEllipse(x, y, radius * 2, radius * 2)  # (x, y, w, h)
 
         if self.eye_points is None:  # 창이 만들어진 직후 한번만 불린다.
+            qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
             self.setStandardShape()
             self.drawBase(qp)
         else:
             qp.setPen(QPen(grayColor, 4, Qt.SolidLine))
             self.drawBase(qp)
 
-            # TODO 정도에 따라 색상 변화
-            qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
-            self.drawFrontPose(qp)
+            qp.setPen(QPen(getColor(self.score), 4, Qt.SolidLine))
+            self.drawFrontPose(qp, self.score)
 
     # 클래스 내의 변수 값을 지워준다.
     def clear(self):
@@ -171,6 +200,7 @@ class SidePose(QLabel):
 
         self.face_deg = None
         self.spine_deg = None
+        self.score = 100
 
     def resizeEvent(self, a0: QResizeEvent) -> None:
         self.w = self.frameGeometry().width()
@@ -188,6 +218,9 @@ class SidePose(QLabel):
     def setDegree(self, spine_deg, face_deg):
         self.spine_deg = spine_deg
         self.face_deg = face_deg
+
+    def setScore(self, score):
+        self.score = score
 
     # 옆모습을 그려주는 함수
     def drawSidePose(self, qp, spine_deg=0, face_deg=0, score=100):
@@ -210,21 +243,21 @@ class SidePose(QLabel):
         face_x = int(root_x + math.cos(math.radians(spine_deg - 90)) * (leng + radius))
         face_y = int(root_y + math.sin(math.radians(spine_deg - 90)) * (leng + radius))
 
-        # 얼굴 (QPoint:center, rx, ry) TODO face_deg쓰기
+        # 얼굴 (QPoint:center, rx, ry)
         qp.drawEllipse(QPoint(face_x, face_y), radius, radius)
         # 눈
-        eye_x = int(face_x + math.cos(-pi / 4) * radius // 2)
-        eye_y = int(face_y + math.sin(-pi / 4) * radius // 2)
+        eye_x = int(face_x + math.cos(-pi / 4 - math.radians(face_deg)) * radius // 2)
+        eye_y = int(face_y + math.sin(-pi / 4 - math.radians(face_deg)) * radius // 2)
         qp.drawEllipse(QPoint(eye_x, eye_y), 2, 2)  # (center:QPoint, rx, ry)
         # 코
-        nose_x = int(face_x + math.cos(-pi / 18) * radius + 2)
-        nose_y = int(face_y + math.sin(-pi / 18) * radius + 2)
+        nose_x = int(face_x + math.cos(-pi / 18 - math.radians(face_deg)) * radius + 2)
+        nose_y = int(face_y + math.sin(-pi / 18 - math.radians(face_deg)) * radius + 2)
         qp.drawEllipse(QPoint(nose_x, nose_y), 2, 2)  # (center:QPoint, rx, ry)
         # 입
-        start_x = int(face_x + math.cos(pi / 3) * radius / 2 - 4)
-        start_y = int(face_y + math.sin(pi / 3) * radius / 2 - 4)
-        end_x = int(face_x + math.cos(pi / 4) * radius + 1)
-        end_y = int(face_y + math.sin(pi / 4) * radius + 1)
+        start_x = int(face_x + math.cos(pi / 3 - math.radians(face_deg)) * radius / 2 - 4)
+        start_y = int(face_y + math.sin(pi / 3 - math.radians(face_deg)) * radius / 2 - 4)
+        end_x = int(face_x + math.cos(pi / 4 - math.radians(face_deg)) * radius + 1)
+        end_y = int(face_y + math.sin(pi / 4 - math.radians(face_deg)) * radius + 1)
         mid_x = int((start_x + end_x) / 2 - (end_y - start_y) * (score - 50) // 100)
         mid_y = int((start_y + end_y) / 2 + (end_x - start_x) * (score - 50) // 100)
         # 웃는 입 모양 그리기
@@ -244,14 +277,15 @@ class SidePose(QLabel):
             qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
             self.drawSidePose(qp)
 
+            # TODO 나중에 삭제해야함
             self.face_deg = 30
             self.spine_deg = 10
         else:
             qp.setPen(QPen(grayColor, 4, Qt.SolidLine))
             self.drawSidePose(qp)
 
-            # TODO 정도에 따라 색상 변화
-            qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
-            self.drawSidePose(qp, self.spine_deg, self.face_deg, 50)
+            color = getColor(self.score)
+            qp.setPen(QPen(color, 4, Qt.SolidLine))
+            self.drawSidePose(qp, self.spine_deg, self.face_deg, self.score)
 
             self.update()
