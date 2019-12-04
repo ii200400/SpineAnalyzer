@@ -193,14 +193,19 @@ class ImageAnalyzer:
         std_pose = self.std_pose
         cur_pose = self.cur_pose
 
+        std_face_center_x = ( std_pose[1][0] + std_pose[4][0] + std_pose[5][0] + std_pose[6][0] )/4
+        cur_face_center_x = ( cur_pose[1][0] + cur_pose[4][0] + cur_pose[5][0] + cur_pose[6][0] )/4
+        Is_z_turn = (std_face_center_x * 1.1 < cur_face_center_x ) or (std_face_center_x * 0.9 > cur_face_center_x )
+        
         std_eye_w = std_pose[5][0] - std_pose[4][0]
         cur_eye_w = cur_pose[5][0] - cur_pose[4][0]
         temp = cur_eye_w / std_eye_w
+        
         if temp >= 1.0:
             temp = 0.999999
 
         z_angle = math.acos(temp) * (180 / pi)
-        return z_angle
+        return z_angle, Is_z_turn
 
     # 거북목. 상의 크기와 물체의 거리는 반비례.
     def visual_turtle_alarm(self):
@@ -250,12 +255,12 @@ class ImageAnalyzer:
 
             temp, x_val = self.visual_x_alarm()
             y_val = self.visual_y_alarm()
-            z_val = self.visual_z_alarm()
+            z_val, Is_z_turn = self.visual_z_alarm()
             turtle_val, turtle_per = self.visual_turtle_alarm()
             stability = self.getStability(x_val, y_val, z_val, turtle_per)
 
             # return [int(x_val), int(y_val), int(z_val), turtle_val]
-            return [x_val, int(y_val), int(z_val), turtle_val, stability], points
+            return [x_val, int(y_val), int(z_val), turtle_val, stability, Is_z_turn], points
 
 #일단 수치가 없는 x, turtle는 일괄적으로 점수를 감소, y, z는 각에 따라 감소
 #값 비율은 x, y, z, turtle 순서대로 30 30 30 40.

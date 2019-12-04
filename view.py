@@ -493,7 +493,7 @@ class AnalyzerTap(QWidget):
         elif x_angle < 85:
             msg = "Tilt your head " + str(abs(round(x_angle - 90, 2))) + " DOWN on the x axis"
         else:
-            msg = "head(x axis): OK"
+            msg = "X axis: OOOOOK"
         return msg
 
     def yMessage(self, y_angle):
@@ -506,18 +506,21 @@ class AnalyzerTap(QWidget):
         else:
             self.alarm_timer.start(5000)
             self.turm = 2100
-            msg = "head(y axis): OK"
+            msg = "Y axis: OOOOOK"
         return msg
 
-    def zMessage(self, z_angle):
+    def zMessage(self, z_angle, Is_z_turn):
         msg = ''
 
         if z_angle > 10:
             msg = "Tilt your head " + str(round(z_angle, 2)) + " LEFT on the z axis"
         elif z_angle < -10:
             msg = "Tilt your head " + str(abs(round(z_angle, 2))) + " RIGHT on the z axis"
+        elif Is_z_turn == True:
+            msg = "Z axis: NOOOOO"
         else:
-            msg = "head(z axis): OK"
+            msg = "Z axis: OOOOOK"
+            
         return msg
 
     def turtleMessage(self, isTurtle):
@@ -541,7 +544,7 @@ class AnalyzerTap(QWidget):
             #임시로 x축 표시하는데다가 stability 점수 표
             self.x_label.setText(self.yMessage(values[4]))
             self.y_label.setText(self.yMessage(values[1]))
-            self.z_label.setText(self.zMessage(values[2]))
+            self.z_label.setText(self.zMessage(values[2], values[5]))
             self.turtle_label.setText(self.turtleMessage(values[3]))
             
         else:
