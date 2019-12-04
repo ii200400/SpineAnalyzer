@@ -475,23 +475,24 @@ class AnalyzerTap(QWidget):
 
     # 자세를 분석한 결과를 메시지로 보여주는 함수
     def analyzeImage(self):
-        values, points = cameraObject.getValues()
+        values, points, score = cameraObject.getValues()
 
         # print(self.alarm_timer.remainingTime())
         if values is not None:
             # TODO 상태에 따라서 컴퓨터 알림창을 띄울 수 있도록 하자.
-
+            posePainter.setScore(score)
             self.status_front.setShape(points)
-            # self.status_side.setDegree() TODO
+            self.status_side.setDegree(values[0], values[3])
 
-            # self.status_front.update()
-            # self.status_side.update()
+            self.status_front.update()
+            self.status_side.update()
         else:
             self.alarm_timer.start(5000)
             self.turm = 2100
         # print(self.alarm_timer.remainingTime())
 
     def sirenAlarm(self):
+        print(volume)
         if self.turm > 500:
             self.turm -= 100
 

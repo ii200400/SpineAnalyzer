@@ -46,6 +46,11 @@ def getColor():
     return QColor().fromRgb(red, green, blue)
 
 
+def setScore(new_score):
+    global score
+    score = new_score
+
+
 # 절레절레와 갸웃갸웃을 그려주는 클래스
 class FrontPose(QLabel):
     global score
@@ -214,8 +219,8 @@ class SidePose(QLabel):
         self.root_y = h // 6 * 5
 
     # 프레임에 기반한 허리와 얼굴의 각도 저장
-    def setDegree(self, spine_deg, face_deg):
-        self.spine_deg = spine_deg
+    def setDegree(self, face_deg, spine_deg):
+        self.spine_deg = int(spine_deg / 100 * 45)
         self.face_deg = face_deg
 
     # 옆모습을 그려주는 함수
@@ -272,10 +277,6 @@ class SidePose(QLabel):
         if self.face_deg is None:  # 창이 만들어진 직후 한번만 불린다.
             qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
             self.drawSidePose(qp)
-
-            # TODO 나중에 삭제해야함
-            self.face_deg = 30
-            self.spine_deg = 10
         else:
             qp.setPen(QPen(grayColor, 4, Qt.SolidLine))
             self.drawSidePose(qp)
@@ -283,6 +284,7 @@ class SidePose(QLabel):
             color = getColor()
             qp.setPen(QPen(color, 4, Qt.SolidLine))
             self.drawSidePose(qp, self.spine_deg, self.face_deg)
+
 
 # 자세 평가를 보이는 클래스
 class PoseRater(QLabel):
@@ -336,7 +338,7 @@ class PoseRater(QLabel):
         qp.setPen(QPen(grayColor, 8, Qt.SolidLine))
         qp.drawArc(x + inner, y + inner,
                    (radius - inner) * 2, (radius - inner) * 2,
-                   deg_list[len(deg_list) - 1] * 16,  deg * 16)
+                   deg_list[len(deg_list) - 1] * 16, deg * 16)
 
         # 수치
         # qp.

@@ -17,6 +17,7 @@ class ImageAnalyzer:
 
         self.std_frame = None
         self.std_shape = None
+        self.std_hor_len = 0
         self.std_x_rate = 0
         self.std_y_rate = 0
 
@@ -141,19 +142,26 @@ class ImageAnalyzer:
         x2 = std_pose[7][0] - std_pose[0][0]
         y2 = std_pose[7][1] - std_pose[0][1]
 
-        hor_len = math.sqrt(x1 ** 2 + y1 ** 2)
+        self.std_hor_len = math.sqrt(x1 ** 2 + y1 ** 2)
+        hor_len = self.std_hor_len
         ver_len = math.sqrt((std_shape[8][0] - std_shape[27][0]) ** 2 +
                             (std_shape[8][1] - std_shape[27][1]) ** 2)
         m_to_j = math.sqrt(x2 ** 2 + y2 ** 2)
 
-        angle = round(
-            math.asin((x1 * y2 - y1 * x2) / (hor_len * m_to_j))
-            * (180 / pi), 2)
+        if m_to_j == 0:
+            self.std_x_rate = 0
+            self.std_y_rate = 0
+        else:
+            angle = round(
+                math.asin((x1 * y2 - y1 * x2) / (hor_len * m_to_j))
+                * (180 / pi), 2)
 
-        rad = math.radians(angle)
-        self.std_x_rate = round(math.cos(rad) * m_to_j / hor_len * 100)
-        self.std_y_rate = round(math.sin(rad) * m_to_j / ver_len * 100)
-        print(self.std_x_rate, self.std_y_rate)
+            rad = math.radians(angle)
+            self.std_x_rate = round(math.cos(rad) * m_to_j / hor_len * 100)
+            self.std_y_rate = round(math.sin(rad) * m_to_j / ver_len * 100)
+
+            if x2 < 0:
+                self.std_x_rate = -self.std_x_rate
 
     def getFrontShape(self):
         shape = self.std_shape
@@ -173,7 +181,7 @@ class ImageAnalyzer:
     # 0-mouth (0,1), 1-inner_mouth(2,3), 2-right_eyebrow(4,5), 3-left_eyebrow(6,7)
     # 4-right_eye(8,9), 5-left_eye(10,11), 6-nose(12,13), 7-jaw(14,15)
     # 특징점을 가지고 x축을 기준으로 몇도가 기울인지 반환 (끄덕끄덕)
-    def visual_x_alarm(self, cur_shape):
+    def visual_xz_alarm(self, cur_shape):
         cur_pose = self.cur_pose
 
         x1 = cur_shape[16][0] - cur_shape[0][0]
@@ -182,25 +190,30 @@ class ImageAnalyzer:
         y2 = cur_pose[7][1] - cur_pose[0][1]
 
         hor_len = math.sqrt(x1 ** 2 + y1 ** 2)
-        print(hor_len)
         ver_len = math.sqrt((cur_shape[8][0] - cur_shape[27][0]) ** 2 +
-                            (cur_shape[27][1] - cur_shape[27][1]) ** 2)
+                            (cur_shape[8][1] - cur_shape[27][1]) ** 2)
         m_to_j = math.sqrt(x2 ** 2 + y2 ** 2)
 
-        angle = round(
-            math.asin((x1 * y2 - y1 * x2) / (hor_len * m_to_j))
-            * (180 / pi), 2)
+        if m_to_j == 0:
+            cur_x_rate = 0
+            cur_y_rate = 0
+        else:
+            angle = round(
+                math.asin((x1 * y2 - y1 * x2) / (hor_len * m_to_j))
+                * (180 / pi), 2)
 
-        std_x_rate = self.std_x_rate
-        std_y_rate = self.std_y_rate
+            rad = math.radians(angle)
+            cur_x_rate = int(math.cos(rad) * m_to_j / hor_len * 100)
+            cur_y_rate = int(math.sin(rad) * m_to_j / ver_len * 100)
 
-        rad = math.radians(angle)
-        cur_x_rate = int(math.cos(rad) * m_to_j / hor_len * 100)
-        cur_y_rate = int(math.sin(rad) * m_to_j / ver_len * 100)
-        x_com = cur_x_rate - std_x_rate
-        y_com = cur_y_rate - std_y_rate
+            if x2 < 0:
+                cur_x_rate = -cur_x_rate
 
-        return 'going'
+        # 1.5배를 하면 각도와 얼추 비슷하게 나와서 곱함
+        x_angle = (cur_x_rate - self.std_x_rate) * 1.5
+        z_angle = (cur_y_rate - self.std_y_rate) * 1.5  # 이름 잘못 쓴거 아니다!!
+
+        return x_angle, z_angle
 
     # 특징점을 가지고 y축을 기준으로 몇도가 기울인지 반환 (갸웃갸웃)
     def visual_y_alarm(self):
@@ -215,39 +228,26 @@ class ImageAnalyzer:
         y_angle = round(
             math.asin((x1 * y2 - y1 * x2) / (math.sqrt(x1 ** 2 + y1 ** 2) * math.sqrt(x2 ** 2 + y2 ** 2)))
             * (180 / pi), 2)
+
         return y_angle
 
-    # 특징점을 가지고 z축을 기준으로 몇도가 기울인지 반환 (절래절래)
-    def visual_z_alarm(self):
-        std_pose = self.std_pose
-        cur_pose = self.cur_pose
-
-        std_eye_w = std_pose[5][0] - std_pose[4][0]
-        cur_eye_w = cur_pose[5][0] - cur_pose[4][0]
-        temp = cur_eye_w / std_eye_w
-        if temp >= 1.0:
-            temp = 0.999999
-
-        z_angle = math.acos(temp) * (180 / pi)
-        return z_angle
-
     # 거북목. 상의 크기와 물체의 거리는 반비례.
-    def visual_turtle_alarm(self):
-        std_pose = self.std_pose
-        cur_pose = self.cur_pose
+    def visual_turtle_alarm(self, cur_shape):
+        std_shape = self.std_shape
+        w = len(self.std_frame[0])
 
-        std_eye_w = std_pose[5][0] - std_pose[4][0]
-        cur_eye_w = cur_pose[5][0] - cur_pose[4][0]
-        std_brow_nose_h = ((std_pose[2][1] + std_pose[3][1]) / 2) - std_pose[6][1]
-        cur_brow_nose_h = ((cur_pose[2][1] + cur_pose[3][1]) / 2) - cur_pose[6][1]
-        std_nose_mouth_h = std_pose[6][1] - std_pose[1][1]
-        cur_nose_mouth_h = cur_pose[6][1] - cur_pose[1][1]
+        std_hor_len = self.std_hor_len
+        cur_hor_len = math.sqrt((cur_shape[16][0] - cur_shape[0][0]) ** 2
+                                + (cur_shape[16][1] - cur_shape[0][1]) ** 2)
+        # 예를 들면 1/3이 아니라 3이 계산에 필요하다.
+        std_dis = w / std_hor_len
+        cur_dis = w / cur_hor_len
 
-        if abs(std_eye_w) < abs(cur_eye_w) and abs(std_brow_nose_h) < abs(cur_brow_nose_h) and abs(
-                std_nose_mouth_h) < abs(cur_nose_mouth_h):
-            # and std_nose_mouth_h < cur_nose_mouth_h
-            return True
-        return False
+        rate = (std_dis - cur_dis) / 1.5 * 100
+        if rate > 100:
+            rate = 100
+
+        return int(rate)
 
     # 저장했던 기준 좌표와 현 자세에 따라서 메시지 반환
     def getValues(self):
@@ -269,13 +269,30 @@ class ImageAnalyzer:
             # face info, [right eye, left eye], nose points, mouse points
             points = [face_info, eye_points, nose_points, mouse_points]
 
-            x_val = self.visual_x_alarm(frame)
-            print(x_val)
-            y_val = self.visual_y_alarm()
-            print(y_val)
-            z_val = self.visual_z_alarm()
-            print(z_val)
-            turtle_val = self.visual_turtle_alarm()
+            x_angle, z_angle = self.visual_xz_alarm(shape)
+            y_angel = self.visual_y_alarm()
+            turtle_per = self.visual_turtle_alarm(shape)
+            score = self.getStability(x_angle, y_angel, z_angle, turtle_per)
+            print(x_angle, y_angel, z_angle, turtle_per, score)
 
-            # return [int(x_val), int(y_val), int(z_val), turtle_val]
-            return [x_val, int(y_val), int(z_val), turtle_val], points
+            # 각도, 각도, 각도, 퍼센티지, 포인트들, 점수
+            # return [x_val, y_val, z_val, turtle_val], points, score
+
+    def getStability(self, x_angle, y_angle, z_angle, turtle_per):
+        stability = 100
+
+        if x_angle != 0:
+            stability -= x_angle * 75
+
+        # 각도-점수 좌표계의 1차 방정식. (10, 0) (30, 30)
+        # 1.5x - 15 = y. y가 뺄 점수, x가 입력 각도.
+        if abs(y_angle) > 10:
+            stability -= (abs(y_angle) * 1.5) - 15
+
+        if abs(z_angle) > 10:
+            stability -= (abs(z_angle) * 1.5) - 15
+
+        if turtle_per != 0:
+            stability -= turtle_per * 100
+
+        return int(stability)
