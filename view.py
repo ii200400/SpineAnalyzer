@@ -486,6 +486,7 @@ class AnalyzerTap(QWidget):
 
             self.status_front.update()
             self.status_side.update()
+            self.status_rater.update()
         else:
             self.alarm_timer.start(5000)
             self.turm = 2100
@@ -513,7 +514,7 @@ class SettingTap(QWidget):
 
         self.volume_slider = QSlider(Qt.Horizontal, self)
         self.volume_slider_text = QLineEdit(str(volume))
-        self.volume_checkbox = QCheckBox('MUTE')
+        self.volume_checkbox = QCheckBox('음소거')
         self.volume_save = 0
 
         self.fps_slider = QSlider(Qt.Horizontal, self)

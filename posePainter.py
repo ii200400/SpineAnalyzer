@@ -9,8 +9,10 @@ baseColor = QColor()
 baseColor.setNamedColor("#232d40")
 snowColor = QColor()
 snowColor.setNamedColor("#e1effa")
-grayColor = QColor()
-grayColor.setNamedColor("#558c8c8c")
+lightBlueColor = QColor()
+lightBlueColor.setNamedColor("#b3d9ff")
+alpha_grayColor = QColor()
+alpha_grayColor.setNamedColor("#558c8c8c")
 
 greenColor = QColor()
 greenColor.setNamedColor("#99ff33")
@@ -39,9 +41,9 @@ def getColor():
         blue = int(per * yellowColor.blue() + (1 - per) * orangeColor.blue())
     else:
         per = (score - 66) * 3 / 100
-        red = int(per * snowColor.red() + (1 - per) * yellowColor.red())
-        green = int(per * snowColor.green() + (1 - per) * yellowColor.green())
-        blue = int(per * snowColor.blue() + (1 - per) * yellowColor.blue())
+        red = int(per * greenColor.red() + (1 - per) * yellowColor.red())
+        green = int(per * greenColor.green() + (1 - per) * yellowColor.green())
+        blue = int(per * greenColor.blue() + (1 - per) * yellowColor.blue())
 
     return QColor().fromRgb(red, green, blue)
 
@@ -179,7 +181,7 @@ class FrontPose(QLabel):
             self.setStandardShape()
             self.drawBase(qp)
         else:
-            qp.setPen(QPen(grayColor, 4, Qt.SolidLine))
+            qp.setPen(QPen(alpha_grayColor, 4, Qt.SolidLine))
             self.drawBase(qp)
 
             qp.setPen(QPen(getColor(), 4, Qt.SolidLine))
@@ -220,11 +222,12 @@ class SidePose(QLabel):
 
     # 프레임에 기반한 허리와 얼굴의 각도 저장
     def setDegree(self, face_deg, spine_deg):
+        # TODO 각도 잘 설정하자.
         self.spine_deg = int(spine_deg / 100 * 45)
         self.face_deg = face_deg
 
     # 옆모습을 그려주는 함수
-    def drawSidePose(self, qp, spine_deg=0, face_deg=0):
+    def drawSidePose(self, qp, spine_deg=0, face_deg=0, score=100):
         root_x, root_y, leng = self.root_x, self.root_y, self.leng
         radius = self.radius
 
@@ -247,18 +250,18 @@ class SidePose(QLabel):
         # 얼굴 (QPoint:center, rx, ry)
         qp.drawEllipse(QPoint(face_x, face_y), radius, radius)
         # 눈
-        eye_x = int(face_x + math.cos(-pi / 4 - math.radians(face_deg)) * radius // 2)
-        eye_y = int(face_y + math.sin(-pi / 4 - math.radians(face_deg)) * radius // 2)
+        eye_x = int(face_x + math.cos(-pi / 8 - math.radians(face_deg)) * radius // 2)
+        eye_y = int(face_y + math.sin(-pi / 8 - math.radians(face_deg)) * radius // 2)
         qp.drawEllipse(QPoint(eye_x, eye_y), 2, 2)  # (center:QPoint, rx, ry)
         # 코
-        nose_x = int(face_x + math.cos(-pi / 18 - math.radians(face_deg)) * radius + 2)
-        nose_y = int(face_y + math.sin(-pi / 18 - math.radians(face_deg)) * radius + 2)
+        nose_x = int(face_x + math.cos(pi / 18 - math.radians(face_deg)) * radius + 2)
+        nose_y = int(face_y + math.sin(pi / 18 - math.radians(face_deg)) * radius + 2)
         qp.drawEllipse(QPoint(nose_x, nose_y), 2, 2)  # (center:QPoint, rx, ry)
         # 입
-        start_x = int(face_x + math.cos(pi / 3 - math.radians(face_deg)) * radius / 2 - 4)
-        start_y = int(face_y + math.sin(pi / 3 - math.radians(face_deg)) * radius / 2 - 4)
-        end_x = int(face_x + math.cos(pi / 4 - math.radians(face_deg)) * radius + 1)
-        end_y = int(face_y + math.sin(pi / 4 - math.radians(face_deg)) * radius + 1)
+        start_x = int(face_x + math.cos(pi / 2 - math.radians(face_deg)) * radius / 2 - 4)
+        start_y = int(face_y + math.sin(pi / 2 - math.radians(face_deg)) * radius / 2 - 4)
+        end_x = int(face_x + math.cos(pi / 3 - math.radians(face_deg)) * radius + 1)
+        end_y = int(face_y + math.sin(pi / 3 - math.radians(face_deg)) * radius + 1)
         mid_x = int((start_x + end_x) / 2 - (end_y - start_y) * (score - 50) // 100)
         mid_y = int((start_y + end_y) / 2 + (end_x - start_x) * (score - 50) // 100)
         # 웃는 입 모양 그리기
@@ -278,15 +281,15 @@ class SidePose(QLabel):
             qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
             self.drawSidePose(qp)
         else:
-            qp.setPen(QPen(grayColor, 4, Qt.SolidLine))
+            qp.setPen(QPen(alpha_grayColor, 4, Qt.SolidLine))
             self.drawSidePose(qp)
 
             color = getColor()
             qp.setPen(QPen(color, 4, Qt.SolidLine))
-            self.drawSidePose(qp, self.spine_deg, self.face_deg)
+            self.drawSidePose(qp, self.spine_deg, self.face_deg, score)
 
 
-# 자세 평가를 보이는 클래스
+# 자세 평가를 보이는 클래스 TODO
 class PoseRater(QLabel):
     global score
 
@@ -335,10 +338,13 @@ class PoseRater(QLabel):
         # 안쪽 둘레
         inner = 12
         deg = int(-score / 100 * (deg_list[len(deg_list) - 1] - deg_list[0]))
-        qp.setPen(QPen(grayColor, 8, Qt.SolidLine))
+        qp.setPen(QPen(alpha_grayColor, 8, Qt.SolidLine))
+        qp.drawArc(x + inner, y + inner,
+                   (radius - inner) * 2, (radius - inner) * 2,
+                   deg_list[0] * 16, (deg_list[len(deg_list) - 1] - deg_list[0]) * 16)
+
+        # 수치
+        qp.setPen(QPen(lightBlueColor, 8, Qt.SolidLine))
         qp.drawArc(x + inner, y + inner,
                    (radius - inner) * 2, (radius - inner) * 2,
                    deg_list[len(deg_list) - 1] * 16, deg * 16)
-
-        # 수치
-        # qp.
