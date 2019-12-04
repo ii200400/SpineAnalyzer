@@ -17,6 +17,8 @@ class ImageAnalyzer:
 
         self.std_frame = None
         self.std_shape = None
+        self.std_x_rate = 0
+        self.std_y_rate = 0
 
         self.std_pose = []  # 기준 자세 리스트
         self.cur_pose = []  # 현재 자세 리스트
@@ -30,6 +32,7 @@ class ImageAnalyzer:
     def faceDetect(self):
         ret, frame = self.cam.read()
         frame = imutils.resize(frame, width=800)
+        frame = cv2.flip(frame, 1)
 
         # 카메라는 연결이 되어있는데 어떤 이유로 이미지를 불러오지 못하면 false가 나오기는 한다.
         if not ret:
@@ -63,7 +66,7 @@ class ImageAnalyzer:
 
             # 얼굴 특징점에 점 그리기
             for (x, y) in shape[i:j]:
-                cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
+                cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
 
                 # TODO 개발자 용 코드(8줄)
                 cv2.circle(copy, (x, y), 1, (0, 0, 255), -1)
@@ -129,8 +132,28 @@ class ImageAnalyzer:
 
     # 기준 좌표 저장 (view의 MainView클래스의 confirmMassage함수에서 사용)
     def setStandardPose(self):
-        self.std_pose = self.getPose(self.std_shape)
-        return
+        std_shape = self.std_shape
+        self.std_pose = self.getPose(std_shape)
+
+        std_pose = self.std_pose
+        x1 = std_shape[16][0] - std_shape[0][0]
+        y1 = std_shape[16][1] - std_shape[0][1]
+        x2 = std_pose[7][0] - std_pose[0][0]
+        y2 = std_pose[7][1] - std_pose[0][1]
+
+        hor_len = math.sqrt(x1 ** 2 + y1 ** 2)
+        ver_len = math.sqrt((std_shape[8][0] - std_shape[27][0]) ** 2 +
+                            (std_shape[8][1] - std_shape[27][1]) ** 2)
+        m_to_j = math.sqrt(x2 ** 2 + y2 ** 2)
+
+        angle = round(
+            math.asin((x1 * y2 - y1 * x2) / (hor_len * m_to_j))
+            * (180 / pi), 2)
+
+        rad = math.radians(angle)
+        self.std_x_rate = round(math.cos(rad) * m_to_j / hor_len * 100)
+        self.std_y_rate = round(math.sin(rad) * m_to_j / ver_len * 100)
+        print(self.std_x_rate, self.std_y_rate)
 
     def getFrontShape(self):
         shape = self.std_shape
@@ -143,26 +166,41 @@ class ImageAnalyzer:
 
         return points
 
+    # TODO face_deg 등 반환
     def getSideShape(self):
         shape = self.std_shape
 
     # 0-mouth (0,1), 1-inner_mouth(2,3), 2-right_eyebrow(4,5), 3-left_eyebrow(6,7)
     # 4-right_eye(8,9), 5-left_eye(10,11), 6-nose(12,13), 7-jaw(14,15)
     # 특징점을 가지고 x축을 기준으로 몇도가 기울인지 반환 (끄덕끄덕)
-    def visual_x_alarm(self):
-        std_pose = self.std_pose
+    def visual_x_alarm(self, cur_shape):
         cur_pose = self.cur_pose
 
-        std_eye_y = (std_pose[2][1] + std_pose[3][1]) / 2
-        cur_eye_y = (cur_pose[2][1] + cur_pose[3][1]) / 2
+        x1 = cur_shape[16][0] - cur_shape[0][0]
+        y1 = cur_shape[16][1] - cur_shape[0][1]
+        x2 = cur_pose[7][0] - cur_pose[0][0]
+        y2 = cur_pose[7][1] - cur_pose[0][1]
 
-        # 10%정도 정상범위 제공.
-        if std_eye_y * 1.1 < cur_eye_y:
-            return "head UP plz"
-        elif std_eye_y * 0.9 > cur_eye_y:
-            return "head DOWN plz"
-        else:
-            return " x OK"
+        hor_len = math.sqrt(x1 ** 2 + y1 ** 2)
+        print(hor_len)
+        ver_len = math.sqrt((cur_shape[8][0] - cur_shape[27][0]) ** 2 +
+                            (cur_shape[27][1] - cur_shape[27][1]) ** 2)
+        m_to_j = math.sqrt(x2 ** 2 + y2 ** 2)
+
+        angle = round(
+            math.asin((x1 * y2 - y1 * x2) / (hor_len * m_to_j))
+            * (180 / pi), 2)
+
+        std_x_rate = self.std_x_rate
+        std_y_rate = self.std_y_rate
+
+        rad = math.radians(angle)
+        cur_x_rate = int(math.cos(rad) * m_to_j / hor_len * 100)
+        cur_y_rate = int(math.sin(rad) * m_to_j / ver_len * 100)
+        x_com = cur_x_rate - std_x_rate
+        y_com = cur_y_rate - std_y_rate
+
+        return 'going'
 
     # 특징점을 가지고 y축을 기준으로 몇도가 기울인지 반환 (갸웃갸웃)
     def visual_y_alarm(self):
@@ -175,7 +213,7 @@ class ImageAnalyzer:
         y2 = cur_pose[4][1] - cur_pose[5][1]
         # 우측 값이 라디안이라 180/np.pi 로 360도 값으로 변환.
         y_angle = round(
-            math.asin((x1 * y2 - y1 * x2) / (math.sqrt(x1 * x1 + y1 * y1) * math.sqrt(x2 * x2 + y2 * y2)))
+            math.asin((x1 * y2 - y1 * x2) / (math.sqrt(x1 ** 2 + y1 ** 2) * math.sqrt(x2 ** 2 + y2 ** 2)))
             * (180 / pi), 2)
         return y_angle
 
@@ -231,9 +269,12 @@ class ImageAnalyzer:
             # face info, [right eye, left eye], nose points, mouse points
             points = [face_info, eye_points, nose_points, mouse_points]
 
-            x_val = self.visual_x_alarm()
+            x_val = self.visual_x_alarm(frame)
+            print(x_val)
             y_val = self.visual_y_alarm()
+            print(y_val)
             z_val = self.visual_z_alarm()
+            print(z_val)
             turtle_val = self.visual_turtle_alarm()
 
             # return [int(x_val), int(y_val), int(z_val), turtle_val]

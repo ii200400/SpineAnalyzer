@@ -337,7 +337,6 @@ class MainView(QWidget):
                 cameraObject.setStandardPose()
 
                 self.hide()
-
                 moniterView.show()
             else:                           # 취소 버튼을 눌렀다면 타이머를 다시 시작한다.
                 self.timer.start(1000 // fps)
@@ -428,11 +427,7 @@ class AnalyzerTap(QWidget):
 
         self.status_front = posePainter.FrontPose()    # 사용자 상태를 반영하는 애니메이션
         self.status_side = posePainter.SidePose()    # 사용자 상태를 반영하는 이미지
-
-        self.x_label = QLabel('알 수 없음')
-        self.y_label = QLabel('알 수 없음')
-        self.z_label = QLabel('알 수 없음')
-        self.turtle_label = QLabel('알 수 없음')
+        self.status_rater = posePainter.PoseRater()
 
         mixer.init()
         self.turm = 2100
@@ -449,11 +444,8 @@ class AnalyzerTap(QWidget):
         self.status_side.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
         self.status_side.setAlignment(Qt.AlignCenter)
 
-        for label in [self.x_label, self.y_label, self.z_label, self.turtle_label]:
-            label.setFont(QFont('나눔바른펜', 12, 50))
-            label.setStyleSheet("color: #e1effa")
-            label.setAlignment(Qt.AlignCenter)
-            label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
+        self.status_rater.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
+        self.status_rater.setAlignment(Qt.AlignCenter)
 
         mixer.music.load("./sound/WindowsDefault.mp3")
 
@@ -463,14 +455,10 @@ class AnalyzerTap(QWidget):
         self.timer.timeout.connect(self.analyzeImage)
         self.timer.stop()
 
-        vbox = QVBoxLayout()
-        for label in [self.x_label, self.y_label, self.z_label, self.turtle_label]:
-            vbox.addWidget(label)
-
         hbox = QHBoxLayout()
         hbox.addWidget(self.status_side, 1)
         hbox.addWidget(self.status_front, 1)
-        hbox.addLayout(vbox, 1)
+        hbox.addWidget(self.status_rater, 1)
 
         self.setLayout(hbox)
 
@@ -485,47 +473,6 @@ class AnalyzerTap(QWidget):
     def hideEvent(self, a0: QHideEvent) -> None:
         self.status_front.clear()
 
-    def xMessage(self, x_angle):
-        msg = ''
-
-        if x_angle > 95:
-            msg = "Tilt your head " + str(round(x_angle - 90, 2)) + " UP on the x axis"
-        elif x_angle < 85:
-            msg = "Tilt your head " + str(abs(round(x_angle - 90, 2))) + " DOWN on the x axis"
-        else:
-            msg = "head(x axis): OK"
-        return msg
-
-    def yMessage(self, y_angle):
-        msg = ''
-
-        if y_angle > 10:
-            msg = "Tilt your head " + str(y_angle) + " LEFT on the y axis"
-        elif y_angle < -10:
-            msg = "Tilt your head " + str(abs(y_angle)) + " RIGHT on the y axis"
-        else:
-            self.alarm_timer.start(5000)
-            self.turm = 2100
-            msg = "head(y axis): OK"
-        return msg
-
-    def zMessage(self, z_angle):
-        msg = ''
-
-        if z_angle > 10:
-            msg = "Tilt your head " + str(round(z_angle, 2)) + " LEFT on the z axis"
-        elif z_angle < -10:
-            msg = "Tilt your head " + str(abs(round(z_angle, 2))) + " RIGHT on the z axis"
-        else:
-            msg = "head(z axis): OK"
-        return msg
-
-    def turtleMessage(self, isTurtle):
-        if isTurtle:
-            return "now U R turtle neck."
-        else:
-            return "head(turtle neck): OK"
-
     # 자세를 분석한 결과를 메시지로 보여주는 함수
     def analyzeImage(self):
         values, points = cameraObject.getValues()
@@ -537,11 +484,8 @@ class AnalyzerTap(QWidget):
             self.status_front.setShape(points)
             # self.status_side.setDegree() TODO
 
-            # self.x_label.setText(self.xMessage(values[0]))
-            self.x_label.setText(values[0])
-            self.y_label.setText(self.yMessage(values[1]))
-            self.z_label.setText(self.zMessage(values[2]))
-            self.turtle_label.setText(self.turtleMessage(values[3]))
+            # self.status_front.update()
+            # self.status_side.update()
         else:
             self.alarm_timer.start(5000)
             self.turm = 2100

@@ -12,6 +12,8 @@ snowColor.setNamedColor("#e1effa")
 grayColor = QColor()
 grayColor.setNamedColor("#558c8c8c")
 
+greenColor = QColor()
+greenColor.setNamedColor("#99ff33")
 yellowColor = QColor()
 yellowColor.setNamedColor("#ffff33")
 orangeColor = QColor()
@@ -19,8 +21,12 @@ orangeColor.setNamedColor("#ff9933")
 redColor = QColor()
 redColor.setNamedColor("#ff3333")
 
+score = 100
 
-def getColor(score):
+
+def getColor():
+    global score
+
     if score <= 33:
         per = score * 3 / 100
         red = int(per * orangeColor.red() + (1 - per) * redColor.red())
@@ -37,19 +43,19 @@ def getColor(score):
         green = int(per * snowColor.green() + (1 - per) * yellowColor.green())
         blue = int(per * snowColor.blue() + (1 - per) * yellowColor.blue())
 
-    print(red, green, blue)
     return QColor().fromRgb(red, green, blue)
 
 
 # 절레절레와 갸웃갸웃을 그려주는 클래스
 class FrontPose(QLabel):
+    global score
+
     def __init__(self, parent=None):
         super().__init__(parent)
         # 현 위젯의 가로/세로(w, h), 얼굴의 시작 좌표(x, y), 얼굴의 반지름(radius)
         self.w, self.h, self.x, self.y, self.radius = 0, 0, 0, 0, 0
 
         self.std_points = None
-        self.need_stand = True
 
         self.std_eye = None
         self.std_nose = None
@@ -58,8 +64,6 @@ class FrontPose(QLabel):
         self.eye_points = None
         self.nose_points = None
         self.mouse_points = None
-
-        self.score = 100
 
     # 크기가 바뀔 때 마다 값 크기에 맞게 설정한다.
     def resizeEvent(self, a0: QResizeEvent) -> None:
@@ -82,8 +86,6 @@ class FrontPose(QLabel):
 
         f_x, f_y = points[0][0], points[0][1]
         leng = points[0][2]
-
-        self.need_stand = True
 
         self.std_eye = self.standardization(f_x, f_y, leng, points[1])
         self.std_nose = self.standardization(f_x, f_y, leng, points[2])
@@ -112,15 +114,13 @@ class FrontPose(QLabel):
 
         return temp
 
-    def setScore(self, score):
-        self.score = score
-
     # 기준 사진을 연하게 그려주는 함수
     def drawBase(self, qp):
         # 얼굴 경계선
         qp.drawEllipse(self.x, self.y, self.radius * 2, self.radius * 2)  # (x, y, w, h)
         # 눈
-        for point in self.std_eye:
+        points = self.std_eye
+        for point in points:
             qp.drawEllipse(QPoint(point[0], point[1]), 2, 2)  # (center:QPoint, rx, ry)
         # 코
         points = self.std_nose
@@ -139,7 +139,7 @@ class FrontPose(QLabel):
                      QPoint(points[1][0], points[1][1]))
         qp.drawPath(path)
 
-    def drawFrontPose(self, qp, score=100):
+    def drawFrontPose(self, qp):
         # 얼굴 경계선
         qp.drawEllipse(self.x, self.y, self.radius * 2, self.radius * 2)  # (x, y, w, h)
         # 눈
@@ -164,8 +164,6 @@ class FrontPose(QLabel):
                      QPoint(points[1][0], points[1][1]))
         qp.drawPath(path)
 
-        self.update()
-
     def paintEvent(self, event):
         super().paintEvent(event)
 
@@ -179,8 +177,8 @@ class FrontPose(QLabel):
             qp.setPen(QPen(grayColor, 4, Qt.SolidLine))
             self.drawBase(qp)
 
-            qp.setPen(QPen(getColor(self.score), 4, Qt.SolidLine))
-            self.drawFrontPose(qp, self.score)
+            qp.setPen(QPen(getColor(), 4, Qt.SolidLine))
+            self.drawFrontPose(qp)
 
     # 클래스 내의 변수 값을 지워준다.
     def clear(self):
@@ -191,6 +189,8 @@ class FrontPose(QLabel):
 
 # 거북목과 끄덕끄덕을 그려주는 클래스
 class SidePose(QLabel):
+    global score
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -200,7 +200,6 @@ class SidePose(QLabel):
 
         self.face_deg = None
         self.spine_deg = None
-        self.score = 100
 
     def resizeEvent(self, a0: QResizeEvent) -> None:
         self.w = self.frameGeometry().width()
@@ -219,11 +218,8 @@ class SidePose(QLabel):
         self.spine_deg = spine_deg
         self.face_deg = face_deg
 
-    def setScore(self, score):
-        self.score = score
-
     # 옆모습을 그려주는 함수
-    def drawSidePose(self, qp, spine_deg=0, face_deg=0, score=100):
+    def drawSidePose(self, qp, spine_deg=0, face_deg=0):
         root_x, root_y, leng = self.root_x, self.root_y, self.leng
         radius = self.radius
 
@@ -284,8 +280,63 @@ class SidePose(QLabel):
             qp.setPen(QPen(grayColor, 4, Qt.SolidLine))
             self.drawSidePose(qp)
 
-            color = getColor(self.score)
+            color = getColor()
             qp.setPen(QPen(color, 4, Qt.SolidLine))
-            self.drawSidePose(qp, self.spine_deg, self.face_deg, self.score)
+            self.drawSidePose(qp, self.spine_deg, self.face_deg)
 
-            self.update()
+# 자세 평가를 보이는 클래스
+class PoseRater(QLabel):
+    global score
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        # 현 위젯의 가로/세로(w, h), 의 시작 좌표(x, y), 얼굴의 반지름(radius)
+        self.w, self.h, self.x, self.y, self.radius = 0, 0, 0, 0, 0
+        self.deg_list = [-30, 30, 90, 150, 210]
+
+    # 크기가 바뀔 때 마다 값 크기에 맞게 설정한다.
+    def resizeEvent(self, a0: QResizeEvent) -> None:
+        self.w = self.frameGeometry().width()
+        self.h = self.frameGeometry().height()
+        w = self.w
+        h = self.h
+
+        self.radius = h // 3
+        self.x = (w // 2) - self.radius
+        self.y = (h // 2) - self.radius
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+
+        x = self.x
+        y = self.y
+        radius = self.radius
+        deg_list = self.deg_list
+
+        qp = QPainter(self)
+
+        # 바깥 둘레
+        qp.setPen(QPen(greenColor, 4, Qt.SolidLine))
+        qp.drawArc(x, y, radius * 2, radius * 2,
+                   deg_list[0] * 16, (deg_list[1] - deg_list[0]) * 16)
+        qp.setPen(QPen(yellowColor, 4, Qt.SolidLine))
+        qp.drawArc(x, y, radius * 2, radius * 2,
+                   deg_list[1] * 16, (deg_list[2] - deg_list[1]) * 16)
+        qp.setPen(QPen(orangeColor, 4, Qt.SolidLine))
+        qp.drawArc(x, y, radius * 2, radius * 2,
+                   deg_list[2] * 16, (deg_list[3] - deg_list[2]) * 16)
+        qp.setPen(QPen(redColor, 4, Qt.SolidLine))
+        qp.drawArc(x, y, radius * 2, radius * 2,
+                   deg_list[3] * 16, (deg_list[4] - deg_list[3]) * 16)
+
+        # 안쪽 둘레
+        inner = 12
+        deg = int(-score / 100 * (deg_list[len(deg_list) - 1] - deg_list[0]))
+        qp.setPen(QPen(grayColor, 8, Qt.SolidLine))
+        qp.drawArc(x + inner, y + inner,
+                   (radius - inner) * 2, (radius - inner) * 2,
+                   deg_list[len(deg_list) - 1] * 16,  deg * 16)
+
+        # 수치
+        # qp.
