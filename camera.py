@@ -154,6 +154,7 @@ class ImageAnalyzer:
     def visual_x_alarm(self):
         std_pose = self.std_pose
         cur_pose = self.cur_pose
+        msg = " "
 
         std_eye_y = (std_pose[2][1] + std_pose[3][1]) / 2
         cur_eye_y = (cur_pose[2][1] + cur_pose[3][1]) / 2
@@ -167,11 +168,13 @@ class ImageAnalyzer:
         
         # 10%정도 정상범위 제공.
         if std_eye_y * 1.05 < cur_eye_y:
-            return "head UP plz", height_dif_per
+            msg = "head UP plz"
         elif std_eye_y * 0.9 > cur_eye_y:
-            return "head DOWN plz", height_dif_per
+            msg = "head DOWN plz"
         else:
-            return "x OK", height_dif_per
+            msg = "x OK"
+        
+        return msg, height_dif_per
 
     # 특징점을 가지고 y축을 기준으로 몇도가 기울인지 반환 (갸웃갸웃)
     def visual_y_alarm(self):
@@ -224,7 +227,9 @@ class ImageAnalyzer:
                 std_nose_mouth_h) < abs(cur_nose_mouth_h):
             # and std_nose_mouth_h < cur_nose_mouth_h
             #보통 값이 0.3까지 올라간다. 극단적인 경우 1.0까지 감.
-            length_dif_per = (abs((std_eye_w - cur_eye_w)/std_eye_w)/3) + (abs((std_brow_nose_h - cur_brow_nose_h)/std_brow_nose_h)/3) + (abs((std_nose_mouth_h - cur_nose_mouth_h)/std_nose_mouth_h)/3)
+            length_dif_per = ((abs((std_eye_w - cur_eye_w)/std_eye_w)/3) + 
+                (abs((std_brow_nose_h - cur_brow_nose_h)/std_brow_nose_h)/3) +
+                (abs((std_nose_mouth_h - cur_nose_mouth_h)/std_nose_mouth_h)/3))
                     #stability 값이 음수로 가는 것을 방지하기 위해 최대값 지정.
             if length_dif_per > 0.5:
                 length_dif_per = 0.5
