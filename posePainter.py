@@ -250,18 +250,18 @@ class SidePose(QLabel):
         # 얼굴 (QPoint:center, rx, ry)
         qp.drawEllipse(QPoint(face_x, face_y), radius, radius)
         # 눈
-        eye_x = int(face_x + math.cos(-pi / 8 - math.radians(face_deg)) * radius // 2)
-        eye_y = int(face_y + math.sin(-pi / 8 - math.radians(face_deg)) * radius // 2)
+        eye_x = int(face_x + math.cos(-pi / 4 - math.radians(face_deg)) * radius // 2)
+        eye_y = int(face_y + math.sin(-pi / 4 - math.radians(face_deg)) * radius // 2)
         qp.drawEllipse(QPoint(eye_x, eye_y), 2, 2)  # (center:QPoint, rx, ry)
         # 코
-        nose_x = int(face_x + math.cos(pi / 18 - math.radians(face_deg)) * radius + 2)
-        nose_y = int(face_y + math.sin(pi / 18 - math.radians(face_deg)) * radius + 2)
+        nose_x = int(face_x + math.cos(- math.radians(face_deg)) * radius + 2)
+        nose_y = int(face_y + math.sin(- math.radians(face_deg)) * radius + 2)
         qp.drawEllipse(QPoint(nose_x, nose_y), 2, 2)  # (center:QPoint, rx, ry)
         # 입
-        start_x = int(face_x + math.cos(pi / 2 - math.radians(face_deg)) * radius / 2 - 4)
-        start_y = int(face_y + math.sin(pi / 2 - math.radians(face_deg)) * radius / 2 - 4)
-        end_x = int(face_x + math.cos(pi / 3 - math.radians(face_deg)) * radius + 1)
-        end_y = int(face_y + math.sin(pi / 3 - math.radians(face_deg)) * radius + 1)
+        start_x = int(face_x + math.cos(pi / 3 - math.radians(face_deg)) * radius / 2 - 4)
+        start_y = int(face_y + math.sin(pi / 3 - math.radians(face_deg)) * radius / 2 - 4)
+        end_x = int(face_x + math.cos(pi / 4 - math.radians(face_deg)) * radius + 1)
+        end_y = int(face_y + math.sin(pi / 4 - math.radians(face_deg)) * radius + 1)
         mid_x = int((start_x + end_x) / 2 - (end_y - start_y) * (score - 50) // 100)
         mid_y = int((start_y + end_y) / 2 + (end_x - start_x) * (score - 50) // 100)
         # 웃는 입 모양 그리기
@@ -348,3 +348,11 @@ class PoseRater(QLabel):
         qp.drawArc(x + inner, y + inner,
                    (radius - inner) * 2, (radius - inner) * 2,
                    deg_list[len(deg_list) - 1] * 16, deg * 16)
+
+        # 점수 텍스트
+        text_inner = 30
+        qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
+        qp.setFont(QFont("나눔바른펜", 25, 100))
+        qp.drawText(x + text_inner, y + text_inner,
+                    (radius - text_inner) * 2, (radius - text_inner) * 2,
+                    Qt.AlignCenter, str(score)+"%")
