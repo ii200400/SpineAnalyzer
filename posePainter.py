@@ -177,7 +177,7 @@ class FrontPose(QLabel):
         qp = QPainter(self)
 
         if self.eye_points is None:  # 창이 만들어진 직후 한번만 불린다.
-            qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
+            qp.setPen(QPen(greenColor, 4, Qt.SolidLine))
             self.setStandardShape()
             self.drawBase(qp)
         else:
@@ -222,7 +222,6 @@ class SidePose(QLabel):
 
     # 프레임에 기반한 허리와 얼굴의 각도 저장
     def setDegree(self, face_deg, spine_deg):
-        # TODO 각도 잘 설정하자.
         self.spine_deg = int(spine_deg / 100 * 45)
         self.face_deg = face_deg
 
@@ -278,7 +277,7 @@ class SidePose(QLabel):
         qp = QPainter(self)
 
         if self.face_deg is None:  # 창이 만들어진 직후 한번만 불린다.
-            qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
+            qp.setPen(QPen(greenColor, 4, Qt.SolidLine))
             self.drawSidePose(qp)
         else:
             qp.setPen(QPen(alpha_grayColor, 4, Qt.SolidLine))
@@ -288,8 +287,13 @@ class SidePose(QLabel):
             qp.setPen(QPen(color, 4, Qt.SolidLine))
             self.drawSidePose(qp, self.spine_deg, self.face_deg, score)
 
+    # 클래스 내의 변수 값을 지워준다.
+    def clear(self):
+        self.face_deg = None
+        self.spine_deg = None
 
-# 자세 평가를 보이는 클래스 TODO
+
+# 자세 평가를 보이는 클래스
 class PoseRater(QLabel):
     global score
 
@@ -352,7 +356,7 @@ class PoseRater(QLabel):
         # 점수 텍스트
         text_inner = 30
         qp.setPen(QPen(snowColor, 4, Qt.SolidLine))
-        qp.setFont(QFont("나눔바른펜", 25, 100))
+        qp.setFont(QFont("나눔바른펜", 18, 100))
         qp.drawText(x + text_inner, y + text_inner,
                     (radius - text_inner) * 2, (radius - text_inner) * 2,
                     Qt.AlignCenter, str(score)+"%")

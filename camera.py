@@ -43,8 +43,6 @@ class ImageAnalyzer:
         # 얼굴 인식
         faces = self.detector(frame)
         if len(faces) == 0:  # 인식되는 얼굴이 없는 경우
-            # TODO 개발자용 코드
-            cv2.imshow("Frame", frame)
             return 1, (frame, None)
 
         # 첫번째로 인식되는 얼굴만 탐색
@@ -58,29 +56,29 @@ class ImageAnalyzer:
     # 이미지에 특징점을 그리는 함수
     def drawPoints(self, frame, shape):
         # TODO 개발자 용 코드(1줄)
-        copy = frame.copy()
+        # copy = frame.copy()
 
         # 특징점들의 그룹과 그룹의 범위
         for (name, (i, j)) in face_utils.FACIAL_LANDMARKS_IDXS.items():
             # TODO 개발자 용 코드(1줄)
-            meanx, meany, count = 0, 0, 0
+            # meanx, meany, count = 0, 0, 0
 
             # 얼굴 특징점에 점 그리기
             for (x, y) in shape[i:j]:
-                cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
+                cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
 
                 # TODO 개발자 용 코드(8줄)
-                cv2.circle(copy, (x, y), 1, (0, 0, 255), -1)
-
-                meanx += x
-                meany += y
-                count += 1
-
-            meanx = int(meanx / count)
-            meany = int(meany / count)
-            cv2.circle(copy, (meanx, meany), 3, (0, 255, 0), -1)
-
-        cv2.imshow("Frame", copy)
+        #         cv2.circle(copy, (x, y), 1, (0, 0, 255), -1)
+        #
+        #         meanx += x
+        #         meany += y
+        #         count += 1
+        #
+        #     meanx = int(meanx / count)
+        #     meany = int(meany / count)
+        #     cv2.circle(copy, (meanx, meany), 3, (0, 255, 0), -1)
+        #
+        # cv2.imshow("Frame", copy)
 
         return frame
 
@@ -209,7 +207,7 @@ class ImageAnalyzer:
         z_angle = (cur_x_rate - self.std_x_rate) * 1.5  # 이름 잘못 쓴거 아니다!!
         x_angle = (cur_y_rate - self.std_y_rate) * 1.5  # 이름 잘못 쓴거 아니다!!
 
-        return x_angle, z_angle
+        return x_angle, z_angle  # 일반적으로 둘 다 -30 ~ 30
 
     # 특징점을 가지고 y축을 기준으로 몇도가 기울인지 반환 (갸웃갸웃)
     def visual_y_alarm(self):
@@ -225,7 +223,7 @@ class ImageAnalyzer:
             math.asin((x1 * y2 - y1 * x2) / (math.sqrt(x1 ** 2 + y1 ** 2) * math.sqrt(x2 ** 2 + y2 ** 2)))
             * (180 / pi), 2)
 
-        return y_angle
+        return y_angle  # 일반적으로 -30 ~ 30
 
     # 거북목. 상의 크기와 물체의 거리는 반비례.
     def visual_turtle_alarm(self, cur_shape):
@@ -241,8 +239,10 @@ class ImageAnalyzer:
         rate = (std_dis - cur_dis) / 1.5 * 100
         if rate > 100:
             rate = 100
+        elif rate < -100:
+            rate = -100
 
-        return int(rate)
+        return int(rate)  # -100 ~ 100
 
     # 저장했던 기준 좌표와 현 자세에 따라서 메시지 반환
     def getValues(self):
@@ -253,7 +253,7 @@ class ImageAnalyzer:
 
         elif status == 2:
             # TODO 개발자용 코드(1줄 / 개별 창으로 실재 상태를 보이기 위해서 사용)
-            self.drawPoints(frame, shape)
+            # self.drawPoints(frame, shape)
 
             self.cur_pose = self.getPose(shape)
 
@@ -275,9 +275,9 @@ class ImageAnalyzer:
     def getStability(self, x_angle, y_angle, z_angle, turtle_per):
         stability = 100
 
-        stability -= min(abs(x_angle) / 2, 15)
-        stability -= min(abs(y_angle) / 2, 15)
-        stability -= min(abs(z_angle) / 2, 15)
-        stability -= int(abs(turtle_per) / 100 * 55)
+        stability -= min(abs(x_angle) / 2, 15)  # 일반적으로 -30 ~ 30
+        stability -= min(abs(y_angle) / 2, 15)  # 일반적으로 -30 ~ 30
+        stability -= min(abs(z_angle) / 2, 15)  # 일반적으로 -30 ~ 30
+        stability -= int(abs(turtle_per) / 100 * 55)  # -100 ~ 100
 
-        return int(stability)
+        return min(100, max(0, int(stability * 1.1)))
