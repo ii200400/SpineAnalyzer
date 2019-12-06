@@ -2,10 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1280357d-6c0f-4f3e-ac8e-6cebdf96bb08" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/image/take-a-picture.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/fairy-256.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/image/fairy-32.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/posePainter.py" beforeDir="false" afterPath="$PROJECT_DIR$/posePainter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image/black_siren.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/image/blue_siren.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/image/fairy1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/image/fairy2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/image/man.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/image/red_siren.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/view.py" beforeDir="false" afterPath="$PROJECT_DIR$/view.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -187,17 +192,17 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/view.py</url>
-          <line>141</line>
+          <line>142</line>
           <option name="timeStamp" value="28" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/view.py</url>
-          <line>148</line>
+          <line>149</line>
           <option name="timeStamp" value="102" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/view.py</url>
-          <line>171</line>
+          <line>172</line>
           <option name="timeStamp" value="103" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -207,7 +212,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/view.py</url>
-          <line>648</line>
+          <line>650</line>
           <option name="timeStamp" value="137" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -252,12 +257,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/view.py</url>
-          <line>509</line>
+          <line>511</line>
           <option name="timeStamp" value="347" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/view.py</url>
-          <line>510</line>
+          <line>512</line>
           <option name="timeStamp" value="348" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">

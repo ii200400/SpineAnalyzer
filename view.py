@@ -92,7 +92,7 @@ class SplashView(QWidget):
         super().__init__()
 
         self.logo_label = QLabel()  # 로고
-        self.logo_text = QLabel('SpineAnalyzer')  # 로고 텍스트
+        self.logo_text = QLabel('Posture Fairy')  # 로고 텍스트
 
         self.timer = QTimer()  # 타이머 (로딩 화면에 머무르는 최소 기간)
 
@@ -101,12 +101,13 @@ class SplashView(QWidget):
     def initUI(self):
         # 로고와 로고 텍스트, 타이머 설정
         self.logo_label.setPixmap(
-            QPixmap('./image/broken-neck.png').scaled(
-                256,
-                256,
+            QPixmap('./image/fairy-256.png').scaled(
+                192,
+                192,
                 Qt.KeepAspectRatio,
                 Qt.SmoothTransformation))
         self.logo_label.setAlignment(Qt.AlignCenter)
+        self.logo_label.setMargin(32)
 
         self.logo_text.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
         self.logo_text.setStyleSheet("color: #e1effa")
@@ -291,8 +292,8 @@ class MainView(QWidget):
 
         # 창 설정
         self.setStyleSheet("background-color: #232d40")
-        self.setWindowTitle('SpineAnalyzer')
-        self.setWindowIcon(QIcon('./image/broken-neck.png'))
+        self.setWindowTitle('Posture Fairy')
+        self.setWindowIcon(QIcon('./image/fairy-32.png'))
         screen = QDesktopWidget().screenGeometry()
         self.setGeometry(screen.width() // 2 - 400, screen.height() // 2 - 200, 800, 400)
         self.setFixedSize(800, 400)
@@ -307,7 +308,7 @@ class MainView(QWidget):
 
         # 메세지 창 생성 및 세부 설정
         message = QMessageBox()
-        message.setWindowIcon(QIcon('./image/broken-neck.png'))
+        message.setWindowIcon(QIcon('./image/fairy-32.png'))
         message.setStyleSheet("QMessageBox { background-color: #232d40;}"
                               "QMessageBox QLabel { "
                               "padding: 20px 5px 5px 5px;"
@@ -330,7 +331,7 @@ class MainView(QWidget):
             self.timer.start(1000 // fps)
 
         else:
-            message.setWindowTitle("Confirm")
+            message.setWindowTitle("확인")
             message.setText("이 사진으로 하시겠습니까?")
             message.setIcon(QMessageBox.Question)
             message.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
@@ -393,18 +394,18 @@ class MoniterView(QDialog):
         # 탭을 넣을 위젯 생성 및 세부 설정
         self.tabs.setMovable(True)
         self.tabs.setStyleSheet("QTabWidget::pane { background-color: #232d40;"
-                           "border: 2px solid #e1effa; border-radius: 4px; border-top-left-radius: 0px; }"
-                           "QTabBar::tab {"
-                           # "background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0.3 #232d40, stop: 1.0 #e1effa);"
-                           "border: 2px solid #e1effa; border-bottom-color: #232d40;"
-                           "background: #232d40;"
-                           "font-family: '나눔바른고딕'; font-size: 8pt; font-weight: bold; color: #e1effa;"
-                           "border-top-left-radius: 4px; border-top-right-radius: 4px;"
-                           "min-width: 15ex; padding: 5px; }"
-                           "QTabBar::tab:!selected:hover { background: #cccccc }"
-                           "QTabBar::tab:!selected { "
-                           "border-bottom-color: #e1effa; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;"
-                           "margin: 5px; padding: 3px; background: #e1effa; color: #232d40;}")
+                                "border: 2px solid #e1effa; border-radius: 4px; border-top-left-radius: 0px; }"
+                                "QTabBar::tab {"
+                                # "background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0.3 #232d40, stop: 1.0 #e1effa);"
+                                "border: 2px solid #e1effa; border-bottom-color: #232d40;"
+                                "background: #232d40;"
+                                "font-family: '나눔바른고딕'; font-size: 8pt; font-weight: bold; color: #e1effa;"
+                                "border-top-left-radius: 4px; border-top-right-radius: 4px;"
+                                "min-width: 15ex; padding: 5px; }"
+                                "QTabBar::tab:!selected:hover { background: #cccccc }"
+                                "QTabBar::tab:!selected { "
+                                "border-bottom-color: #e1effa; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;"
+                                "margin: 5px; padding: 3px; background: #e1effa; color: #232d40;}")
 
         # 탭 추가
         self.tabs.addTab(self.analyzeTap, '상태')
@@ -419,14 +420,15 @@ class MoniterView(QDialog):
         # 창 설정
         # Qt.WindowSystemMenuHint | WindowTitleHint
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        self.setWindowTitle('SpineAnalyzer')
-        self.setWindowIcon(QIcon('./image/broken-neck.png'))
+        self.setWindowTitle('Posture Fairy')
+        self.setWindowIcon(QIcon('./image/fairy-32.png'))
         screen = QDesktopWidget().screenGeometry()
         self.setGeometry(0, screen.height() - 350, 600, 300)
         self.setFixedSize(600, 300)
 
     def showEvent(self, a0: QShowEvent) -> None:
         self.tabs.setCurrentIndex(0)
+
 
 # 첫번째 탭
 class AnalyzerTap(QWidget):
@@ -674,8 +676,8 @@ class SettingTap(QWidget):
 
         # 메세지 창 생성 및 세부 설정
         message = QMessageBox()
-        message.setWindowIcon(QIcon('./image/broken-neck.png'))
-        message.setWindowTitle("Confirm")
+        message.setWindowIcon(QIcon('./image/fairy-32.png'))
+        message.setWindowTitle("확인")
         message.setText("사진을 다시 찍으시겠습니까?")
         message.setIcon(QMessageBox.Question)
         message.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
@@ -698,3 +700,29 @@ class SettingTap(QWidget):
             mainView.show()
         else:  # 취소 버튼을 눌렀다면 타이머를 다시 시작한다.
             self.timer.start(1000 // fps)
+
+# TODO 멀티뷰 만들기(알림창)
+class test(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.warning_sing = QLabel()
+
+        self.timer = QTimer()  # 타이머 (스스로 꺼지는 기간)
+
+        self.initUI()
+
+    def initUI(self):
+        self.timer.timeout.connect(self.disappear)
+        self.timer.start(4000)
+
+        # 창 설정
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setStyleSheet("background-color: #55232d40")  # TODO 배경 투명한지 확인 좀..
+        screen = QDesktopWidget().screenGeometry()
+        self.setGeometry(screen.width() - 400, screen.height() - 400, 400, 200)
+        self.setFixedSize(400, 200)
+
+    def disappear(self):
+        self.hide()
+        return
