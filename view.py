@@ -34,7 +34,7 @@ mainView: MainView  # 메인화면 객체 (지역변수로 사용하니 함수�
 moniterView: MoniterView  # 탭 화면 객체
 
 fps: int = 40  # FPS값
-volume: int = 50  # 음향 크기
+volume: int = 100  # 음향 크기
 
 
 # 텍스트로 값을 바꿀 때 불리는 함수
@@ -426,8 +426,30 @@ class MoniterView(QDialog):
         self.setGeometry(0, screen.height() - 350, 600, 300)
         self.setFixedSize(600, 300)
 
+    # 창이 생겨나기전 값 초기화
     def showEvent(self, a0: QShowEvent) -> None:
         self.tabs.setCurrentIndex(0)
+
+        self.analyzeTap.status_front.saveStandardShape(cameraObject.getFrontShape())
+        posePainter.setScore(100)
+        posePainter.setLine(Qt.SolidLine)
+
+        self.analyzeTap.timer.start(1000 // fps)
+        self.analyzeTap.alarm_timer.start(5000)
+        self.analyzeTap.w_alarm_timer.start(5000)
+
+    # 창이 사라지기 전 값 삭제
+    def hideEvent(self, a0: QHideEvent) -> None:
+        self.analyzeTap.timer.stop()
+        self.analyzeTap.alarm_timer.stop()
+        self.analyzeTap.w_alarm_timer.stop()
+
+        self.analyzeTap.status_front.clear()
+        self.analyzeTap.status_side.clear()
+
+        self.analyzeTap.status_front.repaint()
+        self.analyzeTap.status_side.repaint()
+        self.analyzeTap.status_rater.repaint()
 
 
 # 첫번째 탭
@@ -435,6 +457,8 @@ class AnalyzerTap(QWidget):
 
     def __init__(self):
         super().__init__()
+
+        self.alarm_window = AlarmWindow()
 
         self.front_label = QLabel("앞 모습")
         self.side_label = QLabel("옆 모습")
@@ -445,10 +469,11 @@ class AnalyzerTap(QWidget):
         self.status_rater = posePainter.PoseRater()
 
         mixer.init()
-        self.turm = 2100
+        # self.turm = 3000
 
         self.timer = QTimer()
         self.alarm_timer = QTimer()
+        self.w_alarm_timer = QTimer()
 
         self.initUI()
 
@@ -464,8 +489,11 @@ class AnalyzerTap(QWidget):
 
         mixer.music.load("./sound/WindowsDefault.mp3")
 
-        # self.alarm_timer.timeout.connect(self.sirenAlarm) TODO 메시지 창으로?
+        self.alarm_timer.timeout.connect(self.soundAlarm)
         self.alarm_timer.stop()
+
+        self.w_alarm_timer.timeout.connect(self.showAlarmWindow)
+        self.w_alarm_timer.stop()
 
         self.timer.timeout.connect(self.analyzeImage)
         self.timer.stop()
@@ -489,18 +517,6 @@ class AnalyzerTap(QWidget):
 
         self.setLayout(hbox)
 
-    # 창이 생겨나기전 값 초기화
-    def showEvent(self, a0: QShowEvent) -> None:
-        self.status_front.saveStandardShape(cameraObject.getFrontShape())
-
-        self.timer.start(1000 // fps)
-        self.alarm_timer.start(5000)
-
-    # 창이 사라지기 전 값 삭제
-    def hideEvent(self, a0: QHideEvent) -> None:
-        self.status_front.clear()
-        self.status_side.clear()
-
     # 자세를 분석한 결과를 메시지로 보여주는 함수
     def analyzeImage(self):
         values, points, score = cameraObject.getValues()
@@ -509,27 +525,40 @@ class AnalyzerTap(QWidget):
         if values is not None:
             # TODO 상태에 따라서 컴퓨터 알림창을 띄울 수 있도록 하자.
             posePainter.setScore(score)
+            posePainter.setLine(Qt.SolidLine)
+
             self.status_front.setShape(points)
             self.status_side.setDegree(values[0], values[3])
 
-            self.status_front.update()
-            self.status_side.update()
-            self.status_rater.update()
+            if score > 70:
+                self.alarm_timer.start(5000)
+                self.w_alarm_timer.start(5000)
+
         else:
+            posePainter.setLine(Qt.DotLine)
+
             self.alarm_timer.start(5000)
-            self.turm = 2100
+            self.w_alarm_timer.start(5000)
+
+        self.status_front.repaint()
+        self.status_side.repaint()
+        self.status_rater.repaint()
+
         # print(self.alarm_timer.remainingTime())
 
-    def sirenAlarm(self):
-        print(volume)
-        if self.turm > 500:
-            self.turm -= 100
+    # 알림창이 나오도록 하는 함수
+    def showAlarmWindow(self):
+        self.alarm_window.show()
+        self.w_alarm_timer.stop()
 
-        print(volume)
+    # 알람 소리가 나도록 하는 함수
+    def soundAlarm(self):
+        print("sound!!")
+
         mixer.music.set_volume(volume / 100)
         mixer.music.play()
 
-        self.alarm_timer.start(self.turm)
+        self.alarm_timer.start(5000)
 
 
 # 두번째 탭
@@ -701,28 +730,76 @@ class SettingTap(QWidget):
         else:  # 취소 버튼을 눌렀다면 타이머를 다시 시작한다.
             self.timer.start(1000 // fps)
 
+
 # TODO 멀티뷰 만들기(알림창)
-class test(QWidget):
+class AlarmWindow(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.warning_sing = QLabel()
+        self.fairy = QLabel()
+        self.fairy_text = QLabel("척추의 요정")
+
+        self.warning_text = QLabel("안녕! 나는 척추의 요정!")
 
         self.timer = QTimer()  # 타이머 (스스로 꺼지는 기간)
 
         self.initUI()
 
     def initUI(self):
+        self.fairy.setPixmap(
+            QPixmap('./image/fairy-256.png').scaled(
+                64,
+                64,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation))
+        self.fairy.setAlignment(Qt.AlignBottom | Qt.AlignHCenter)
+        self.fairy.setMargin(5)
+
+        self.fairy_text.setFont(QFont("나눔바른펜", 14, 100))
+        self.fairy_text.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+
+        self.warning_text.setFont(QFont("나눔바른펜", 12, 100))
+        self.warning_text.setAlignment(Qt.AlignCenter)
+
         self.timer.timeout.connect(self.disappear)
-        self.timer.start(4000)
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.fairy, 3)
+        vbox.addWidget(self.fairy_text, 2)
+        vbox.setSpacing(0)
+
+        hbox = QHBoxLayout()
+        hbox.addLayout(vbox, 1)
+        hbox.addWidget(self.warning_text, 3)
+        hbox.setSpacing(0)
+        hbox.setContentsMargins(10, 10, 10, 10)
+
+        container = QWidget()
+        container.setObjectName('container')
+        # container.setStyleSheet("QWidget { "
+        container.setStyleSheet("#container { "
+                                "background-color: #77cccccc;"
+                                "border: 2px solid #77232d40; border-radius: 5px; }")
+        container.setLayout(hbox)
+
+        box = QHBoxLayout()
+        box.addWidget(container)
+        box.setAlignment(Qt.AlignCenter)
+
+        self.setLayout(box)
 
         # 창 설정
-        self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setStyleSheet("background-color: #55232d40")  # TODO 배경 투명한지 확인 좀..
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
         screen = QDesktopWidget().screenGeometry()
-        self.setGeometry(screen.width() - 400, screen.height() - 400, 400, 200)
-        self.setFixedSize(400, 200)
+        self.setGeometry(screen.width() - 500, 170, 500, 170)
+        self.setFixedSize(500, 170)
+
+    def showEvent(self, a0: QShowEvent) -> None:
+        self.timer.start(8000)
+
+    def hideEvent(self, a0: QHideEvent) -> None:
+        moniterView.analyzeTap.w_alarm_timer.start(5000)
 
     def disappear(self):
         self.hide()
-        return

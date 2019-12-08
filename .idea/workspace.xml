@@ -2,15 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1280357d-6c0f-4f3e-ac8e-6cebdf96bb08" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/image/fairy-256.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/image/fairy-32.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/sound/WindowsError.mp3" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image/black_siren.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/image/blue_siren.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/image/fairy1.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/image/fairy2.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/image/man.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/image/red_siren.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/posePainter.py" beforeDir="false" afterPath="$PROJECT_DIR$/posePainter.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/view.py" beforeDir="false" afterPath="$PROJECT_DIR$/view.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -44,8 +38,8 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\im\Desktop\coding\openCV\SpineAnalyzerProject\image" />
       <recent name="C:\Users\im\Desktop\coding\openCV\SpineAnalyzerProject\sound" />
+      <recent name="C:\Users\im\Desktop\coding\openCV\SpineAnalyzerProject\image" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -206,81 +200,39 @@
           <option name="timeStamp" value="103" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/camera.py</url>
-          <line>248</line>
-          <option name="timeStamp" value="124" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/view.py</url>
-          <line>650</line>
+          <line>679</line>
           <option name="timeStamp" value="137" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+        <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/view.py</url>
-          <line>14</line>
-          <option name="timeStamp" value="139" />
+          <line>430</line>
+          <option name="timeStamp" value="354" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/posePainter.py</url>
-          <line>325</line>
-          <option name="timeStamp" value="245" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/posePainter.py</url>
-          <line>171</line>
-          <option name="timeStamp" value="257" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/posePainter.py</url>
-          <line>126</line>
-          <option name="timeStamp" value="289" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/posePainter.py</url>
-          <line>150</line>
-          <option name="timeStamp" value="305" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/posePainter.py</url>
-          <line>271</line>
-          <option name="timeStamp" value="309" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/posePainter.py</url>
-          <line>146</line>
-          <option name="timeStamp" value="314" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/camera.py</url>
-          <line>266</line>
-          <option name="timeStamp" value="342" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+        <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/view.py</url>
-          <line>511</line>
-          <option name="timeStamp" value="347" />
+          <line>521</line>
+          <option name="timeStamp" value="359" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+        <line-breakpoint enabled="true" type="python-line">
           <url>file://$PROJECT_DIR$/view.py</url>
-          <line>512</line>
-          <option name="timeStamp" value="348" />
+          <line>524</line>
+          <option name="timeStamp" value="360" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/posePainter.py</url>
-          <line>245</line>
-          <option name="timeStamp" value="350" />
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file://$PROJECT_DIR$/view.py</url>
+          <line>550</line>
+          <option name="timeStamp" value="361" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/posePainter.py</url>
-          <line>259</line>
-          <option name="timeStamp" value="351" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/posePainter.py</url>
-          <line>160</line>
-          <option name="timeStamp" value="352" />
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file://$PROJECT_DIR$/view.py</url>
+          <line>555</line>
+          <option name="timeStamp" value="362" />
         </line-breakpoint>
       </breakpoints>
+      <breakpoints-defaults>
+        <breakpoint type="python-line" />
+      </breakpoints-defaults>
     </breakpoint-manager>
   </component>
 </project>

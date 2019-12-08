@@ -23,24 +23,25 @@ orangeColor.setNamedColor("#ff9933")
 redColor = QColor()
 redColor.setNamedColor("#ff3333")
 
-score = 100
+Line = Qt.SolidLine
+Score = 100
 
 
 def getColor():
-    global score
+    global Score
 
-    if score <= 33:
-        per = score * 3 / 100
+    if Score <= 33:
+        per = Score * 3 / 100
         red = int(per * orangeColor.red() + (1 - per) * redColor.red())
         green = int(per * orangeColor.green() + (1 - per) * redColor.green())
         blue = int(per * orangeColor.blue() + (1 - per) * redColor.blue())
-    elif score <= 66:
-        per = (score - 33) * 3 / 100
+    elif Score <= 66:
+        per = (Score - 33) * 3 / 100
         red = int(per * yellowColor.red() + (1 - per) * orangeColor.red())
         green = int(per * yellowColor.green() + (1 - per) * orangeColor.green())
         blue = int(per * yellowColor.blue() + (1 - per) * orangeColor.blue())
     else:
-        per = (score - 66) * 3 / 100
+        per = (Score - 66) * 3 / 100
         red = int(per * greenColor.red() + (1 - per) * yellowColor.red())
         green = int(per * greenColor.green() + (1 - per) * yellowColor.green())
         blue = int(per * greenColor.blue() + (1 - per) * yellowColor.blue())
@@ -49,13 +50,18 @@ def getColor():
 
 
 def setScore(new_score):
-    global score
-    score = new_score
+    global Score
+    Score = new_score
+
+
+def setLine(new_line):
+    global Line
+    Line = new_line
 
 
 # 절레절레와 갸웃갸웃을 그려주는 클래스
 class FrontPose(QLabel):
-    global score
+    global Score
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -125,19 +131,23 @@ class FrontPose(QLabel):
     def drawBase(self, qp):
         # 얼굴 경계선
         qp.drawEllipse(self.x, self.y, self.radius * 2, self.radius * 2)  # (x, y, w, h)
+
         # 눈
         points = self.std_eye
         for point in points:
             qp.drawEllipse(QPoint(point[0], point[1]), 2, 2)  # (center:QPoint, rx, ry)
+
         # 코
         points = self.std_nose
         for num in range(1, len(points)):
             qp.drawLine(points[num - 1][0], points[num - 1][1],
                         points[num][0], points[num][1])
+
         # 입
         points = self.std_mouse
         mid_x = int((points[0][0] + points[1][0]) / 2 + (points[0][1] - points[1][1]) / 2)
         mid_y = int((points[0][1] + points[1][1]) / 2 - (points[0][0] - points[1][0]) / 2)
+
         # 웃는 입 모양 그리기
         path = QPainterPath()
         path.moveTo(QPoint(points[0][0], points[0][1]))
@@ -149,20 +159,24 @@ class FrontPose(QLabel):
     def drawFrontPose(self, qp):
         # 얼굴 경계선
         qp.drawEllipse(self.x, self.y, self.radius * 2, self.radius * 2)  # (x, y, w, h)
+
         # 눈
         for point in self.eye_points:
             qp.drawEllipse(QPoint(point[0], point[1]), 2, 2)  # (center:QPoint, rx, ry)
+
         # 코
         points = self.nose_points
         for num in range(1, len(points)):
             qp.drawLine(points[num - 1][0], points[num - 1][1],
                         points[num][0], points[num][1])
+
         # 입
         points = self.mouse_points
         mid_x = int((points[0][0] + points[1][0]) / 2
-                    - (points[1][1] - points[0][1]) * (score - 50) // 100)
+                    - (points[1][1] - points[0][1]) * (Score - 50) // 100)
         mid_y = int((points[0][1] + points[1][1]) / 2
-                    + (points[1][0] - points[0][0]) * (score - 50) // 100)
+                    + (points[1][0] - points[0][0]) * (Score - 50) // 100)
+
         # 웃는 입 모양 그리기
         path = QPainterPath()
         path.moveTo(QPoint(points[0][0], points[0][1]))
@@ -177,14 +191,14 @@ class FrontPose(QLabel):
         qp = QPainter(self)
 
         if self.eye_points is None:  # 창이 만들어진 직후 한번만 불린다.
-            qp.setPen(QPen(greenColor, 4, Qt.SolidLine))
+            qp.setPen(QPen(greenColor, 4, Line))
             self.setStandardShape()
             self.drawBase(qp)
         else:
-            qp.setPen(QPen(alpha_grayColor, 4, Qt.SolidLine))
+            qp.setPen(QPen(alpha_grayColor, 4, Line))
             self.drawBase(qp)
 
-            qp.setPen(QPen(getColor(), 4, Qt.SolidLine))
+            qp.setPen(QPen(getColor(), 4, Line))
             self.drawFrontPose(qp)
 
     # 클래스 내의 변수 값을 지워준다.
@@ -196,7 +210,7 @@ class FrontPose(QLabel):
 
 # 거북목과 끄덕끄덕을 그려주는 클래스
 class SidePose(QLabel):
-    global score
+    global Score
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -277,15 +291,15 @@ class SidePose(QLabel):
         qp = QPainter(self)
 
         if self.face_deg is None:  # 창이 만들어진 직후 한번만 불린다.
-            qp.setPen(QPen(greenColor, 4, Qt.SolidLine))
+            qp.setPen(QPen(greenColor, 4, Line))
             self.drawSidePose(qp)
         else:
-            qp.setPen(QPen(alpha_grayColor, 4, Qt.SolidLine))
+            qp.setPen(QPen(alpha_grayColor, 4, Line))
             self.drawSidePose(qp)
 
             color = getColor()
-            qp.setPen(QPen(color, 4, Qt.SolidLine))
-            self.drawSidePose(qp, self.spine_deg, self.face_deg, score)
+            qp.setPen(QPen(color, 4, Line))
+            self.drawSidePose(qp, self.spine_deg, self.face_deg, Score)
 
     # 클래스 내의 변수 값을 지워준다.
     def clear(self):
@@ -295,7 +309,7 @@ class SidePose(QLabel):
 
 # 자세 평가를 보이는 클래스
 class PoseRater(QLabel):
-    global score
+    global Score
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -341,7 +355,7 @@ class PoseRater(QLabel):
 
         # 안쪽 둘레
         inner = 12
-        deg = int(-score / 100 * (deg_list[len(deg_list) - 1] - deg_list[0]))
+        deg = int(-Score / 100 * (deg_list[len(deg_list) - 1] - deg_list[0]))
         qp.setPen(QPen(alpha_grayColor, 8, Qt.SolidLine))
         qp.drawArc(x + inner, y + inner,
                    (radius - inner) * 2, (radius - inner) * 2,
@@ -359,4 +373,4 @@ class PoseRater(QLabel):
         qp.setFont(QFont("나눔바른펜", 18, 100))
         qp.drawText(x + text_inner, y + text_inner,
                     (radius - text_inner) * 2, (radius - text_inner) * 2,
-                    Qt.AlignCenter, str(score)+"%")
+                    Qt.AlignCenter, str(Score) + "%")
