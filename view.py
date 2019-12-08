@@ -19,6 +19,7 @@ from pygame import mixer
 
 import camera
 import posePainter
+import fairyScript
 
 
 class MainView(object):
@@ -469,11 +470,13 @@ class AnalyzerTap(QWidget):
         self.status_rater = posePainter.PoseRater()
 
         mixer.init()
-        # self.turm = 3000
+        self.save_time = 0
+        self.save_w_time = 0
 
         self.timer = QTimer()
         self.alarm_timer = QTimer()
         self.w_alarm_timer = QTimer()
+        self.see_timer = QTimer()
 
         self.initUI()
 
@@ -497,6 +500,9 @@ class AnalyzerTap(QWidget):
 
         self.timer.timeout.connect(self.analyzeImage)
         self.timer.stop()
+
+        self.see_timer.timeout.connect(self.userGone)
+        self.see_timer.stop()
 
         vbox1 = QVBoxLayout()
         vbox1.addWidget(self.side_label)
@@ -523,7 +529,22 @@ class AnalyzerTap(QWidget):
 
         # print(self.alarm_timer.remainingTime())
         if values is not None:
-            # TODO 상태에 따라서 컴퓨터 알림창을 띄울 수 있도록 하자.
+            if self.see_timer.isActive():
+                remain = self.see_timer.remainingTime()
+
+                # TODO 2초 이하는 잠깐씩 얼굴인식이 안 되었다고 생각한다.
+                if remain > 28000:
+                    self.alarm_timer.start(
+                        max(1, self.save_time - (30000 - remain)))
+                    self.w_alarm_timer.start(
+                        max(1, self.save_w_time - (30000 - remain)))
+
+                else:
+                    self.alarm_timer.start(5000)
+                    self.w_alarm_timer.start(5000)
+
+                self.see_timer.stop()
+
             posePainter.setScore(score)
             posePainter.setLine(Qt.SolidLine)
 
@@ -535,10 +556,18 @@ class AnalyzerTap(QWidget):
                 self.w_alarm_timer.start(5000)
 
         else:
-            posePainter.setLine(Qt.DotLine)
+            if not self.see_timer.isActive():
+                self.see_timer.start(30000)
 
-            self.alarm_timer.start(5000)
-            self.w_alarm_timer.start(5000)
+                self.save_time = self.alarm_timer.remainingTime()
+                self.save_w_time = self.w_alarm_timer.remainingTime()
+
+                self.alarm_timer.stop()
+                self.w_alarm_timer.stop()
+
+            # TODO 2초가 지나면 점선으로 변하여 얼굴 인식이 되고있지 않음을 보여준다.
+            elif self.see_timer.remainingTime() < 28000:
+                posePainter.setLine(Qt.DotLine)
 
         self.status_front.repaint()
         self.status_side.repaint()
@@ -559,6 +588,32 @@ class AnalyzerTap(QWidget):
         mixer.music.play()
 
         self.alarm_timer.start(5000)
+
+    def userGone(self):
+        self.see_timer.stop()
+
+        moniterView.hide()
+        mainView.show()
+
+        message = QMessageBox()
+        message.setWindowIcon(QIcon('./image/fairy-32.png'))
+        message.setWindowTitle("알림")
+        message.setText("오랜 시간 얼굴을 인식하지 못하여 사진을 다시 찍어야 합니다.")
+        message.setIcon(QMessageBox.Warning)
+        message.setStandardButtons(QMessageBox.Yes)
+        message.setDefaultButton(QMessageBox.Yes)
+        message.setStyleSheet("QMessageBox { background-color: #232d40;}"
+                              "QMessageBox QLabel { "
+                              "padding: 20px 5px 5px 5px;"
+                              "font-family: '나눔바른펜'; font-size: 12pt; color: #e1effa; }"
+                              "QMessageBox QPushButton { "
+                              "background-color: #cccccc; margin: 5px; padding: 5px 15px 5px 15px; "
+                              "font-family: '나눔바른고딕'; font-size: 10pt; font-weight: bold; color: #232d40"
+                              "border: 2px solid #232d40; border-radius: 5px; }"
+                              "QMessageBox QPushButton:pressed { background-color: #8c8c8c; }")
+
+        # 메세지 창 버튼에 대한 결과
+        answer = message.exec_()
 
 
 # 두번째 탭
@@ -731,7 +786,7 @@ class SettingTap(QWidget):
             self.timer.start(1000 // fps)
 
 
-# TODO 멀티뷰 만들기(알림창)
+# 알림 창
 class AlarmWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -797,6 +852,9 @@ class AlarmWindow(QWidget):
 
     def showEvent(self, a0: QShowEvent) -> None:
         self.timer.start(8000)
+
+        # TODO random으로 바꾸기
+        self.warning_text.setText(fairyScript.getScript(3))
 
     def hideEvent(self, a0: QHideEvent) -> None:
         moniterView.analyzeTap.w_alarm_timer.start(5000)

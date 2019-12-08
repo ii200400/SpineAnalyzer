@@ -191,11 +191,11 @@ class FrontPose(QLabel):
         qp = QPainter(self)
 
         if self.eye_points is None:  # 창이 만들어진 직후 한번만 불린다.
-            qp.setPen(QPen(greenColor, 4, Line))
+            qp.setPen(QPen(greenColor, 4, Qt.SolidLine))
             self.setStandardShape()
             self.drawBase(qp)
         else:
-            qp.setPen(QPen(alpha_grayColor, 4, Line))
+            qp.setPen(QPen(alpha_grayColor, 4, Qt.SolidLine))
             self.drawBase(qp)
 
             qp.setPen(QPen(getColor(), 4, Line))
@@ -291,10 +291,10 @@ class SidePose(QLabel):
         qp = QPainter(self)
 
         if self.face_deg is None:  # 창이 만들어진 직후 한번만 불린다.
-            qp.setPen(QPen(greenColor, 4, Line))
+            qp.setPen(QPen(greenColor, 4, Qt.SolidLine))
             self.drawSidePose(qp)
         else:
-            qp.setPen(QPen(alpha_grayColor, 4, Line))
+            qp.setPen(QPen(alpha_grayColor, 4, Qt.SolidLine))
             self.drawSidePose(qp)
 
             color = getColor()
