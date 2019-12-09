@@ -16,6 +16,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from pygame import mixer
+import random
 
 import camera
 import posePainter
@@ -36,6 +37,7 @@ moniterView: MoniterView  # 탭 화면 객체
 
 fps: int = 40  # FPS값
 volume: int = 100  # 음향 크기
+isOnlySound: bool = True
 
 
 # 텍스트로 값을 바꿀 때 불리는 함수
@@ -577,15 +579,19 @@ class AnalyzerTap(QWidget):
 
     # 알림창이 나오도록 하는 함수
     def showAlarmWindow(self):
-        self.alarm_window.show()
-        self.w_alarm_timer.stop()
+        if not isOnlySound:
+            self.alarm_window.show()
+            self.w_alarm_timer.stop()
+        else:
+            self.w_alarm_timer.start(5000)
 
     # 알람 소리가 나도록 하는 함수
     def soundAlarm(self):
         print("sound!!")
 
-        mixer.music.set_volume(volume / 100)
-        mixer.music.play()
+        if isOnlySound:
+            mixer.music.set_volume(volume / 100)
+            mixer.music.play()
 
         self.alarm_timer.start(5000)
 
@@ -631,8 +637,10 @@ class SettingTap(QWidget):
         self.fps_slider = QSlider(Qt.Horizontal, self)
         self.fps_slider_text = QLineEdit(str(fps))
 
+        self.r_but = QRadioButton('음향', self)
+        self.r_but2 = QRadioButton('음향과 메시지 창', self)
+
         self.back_but = QPushButton()
-        self.exit_but = QPushButton()
 
         self.timer = QTimer()
 
@@ -672,16 +680,6 @@ class SettingTap(QWidget):
         self.volume_checkbox.setStyleSheet("QCheckBox { "
                                            "font-family: '나눔바른펜'; font-size: 10pt; font-weight: bold; color: #e1effa; }")
 
-        self.back_but.setFixedSize(96, 96)
-        self.back_but.setIcon(QIcon('./image/take-a-picture.png'))
-        self.back_but.setIconSize(QSize(54, 54))
-        # self.back_but.setLayoutDirection(Qt.LeftToRight)
-        self.back_but.released.connect(self.confirmMassage)
-        self.back_but.setStyleSheet("QPushButton  {border: 2px solid #cccccc; border-radius: 36px;"
-                                    "background-color: #cccccc; "
-                                    "text-align: bottom;}"
-                                    "QPushButton:pressed { background-color: #8c8c8c; }")
-
         # FPS에 관한 그룹
         FPS_group = QGroupBox('프레임')
         FPS_group.setStyleSheet(groupStyle)
@@ -702,6 +700,24 @@ class SettingTap(QWidget):
         self.fps_slider_text.editingFinished.connect(lambda: pressEnter(self.fps_slider, self.fps_slider_text))
         self.fps_slider_text.setStyleSheet("background-color: #cccccc; color: #e1effa"
                                            "margin: 10px 2px")
+
+        self.r_but.setChecked(True)
+        self.r_but.toggled.connect(self.changeMode)
+        self.r_but.setStyleSheet("QRadioButton { "
+                                 "font-family: '나눔바른펜'; font-size: 10pt; font-weight: bold; color: #e1effa; }")
+        self.r_but2.setStyleSheet("QRadioButton { "
+                                  "font-family: '나눔바른펜'; font-size: 10pt; font-weight: bold; color: #e1effa; }")
+
+        # TODO 사진다시 찍기라는 텍스터 넣고 묶어주기..
+        self.back_but.setFixedSize(96, 96)
+        self.back_but.setIcon(QIcon('./image/take-a-picture.png'))
+        self.back_but.setIconSize(QSize(54, 54))
+        # self.back_but.setLayoutDirection(Qt.LeftToRight)
+        self.back_but.released.connect(self.confirmMassage)
+        self.back_but.setStyleSheet("QPushButton  {border: 2px solid #cccccc; border-radius: 36px;"
+                                    "background-color: #cccccc; "
+                                    "text-align: bottom;}"
+                                    "QPushButton:pressed { background-color: #8c8c8c; }")
 
         # 슬라이더 그룹에 위젯 배치
         volume_hbox = QHBoxLayout()
@@ -724,10 +740,21 @@ class SettingTap(QWidget):
         vbox.addWidget(volume_group, 1)
         vbox.addWidget(FPS_group, 1)
 
+        radio_group = QGroupBox('알람 방법')
+        radio_group.setStyleSheet(groupStyle)
+
+        radio_vbox = QVBoxLayout()
+        radio_vbox.addWidget(self.r_but)
+        radio_vbox.addWidget(self.r_but2)
+        radio_group.setLayout(radio_vbox)
+
+        vbox2 = QVBoxLayout()
+        vbox2.addWidget(radio_group, 1)
+        vbox2.addWidget(self.back_but, 1, Qt.AlignCenter)
+
         hbox = QHBoxLayout()
         hbox.addLayout(vbox, 3)
-        hbox.addWidget(self.back_but, 1)
-        hbox.setAlignment(Qt.AlignVCenter)
+        hbox.addLayout(vbox2, 1)
 
         self.setLayout(hbox)
 
@@ -754,6 +781,10 @@ class SettingTap(QWidget):
 
             self.volume_slider.setEnabled(True)
             self.volume_slider_text.setEnabled(True)
+
+    def changeMode(self):
+        global isOnlySound
+        isOnlySound = self.r_but.isChecked()
 
     def confirmMassage(self):
         self.timer.stop()
@@ -853,8 +884,8 @@ class AlarmWindow(QWidget):
     def showEvent(self, a0: QShowEvent) -> None:
         self.timer.start(8000)
 
-        # TODO random으로 바꾸기
-        self.warning_text.setText(fairyScript.getScript(3))
+        ran = random.randint(1, 3)
+        self.warning_text.setText(fairyScript.getScript(ran))
 
     def hideEvent(self, a0: QHideEvent) -> None:
         moniterView.analyzeTap.w_alarm_timer.start(5000)
