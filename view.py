@@ -12,6 +12,8 @@
 # 60 /63 /65  * 고동색 #3c3f41
 # 204/204/204  * 회색 #cccccc
 
+# TODO 글꼴 확인, 문구 추가
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -86,6 +88,30 @@ def setSliderVolume(slider, text):
 
     volume = slider.value()
     text.setText(str(volume))
+
+
+# moniterView 초기화
+def mainShowSetting():
+    moniterView.analyzeTap.timer.stop()
+    moniterView.analyzeTap.alarm_timer.stop()
+    moniterView.analyzeTap.w_alarm_timer.stop()
+
+    moniterView.analyzeTap.status_front.clear()
+    moniterView.analyzeTap.status_side.clear()
+
+    moniterView.analyzeTap.status_front.repaint()
+    moniterView.analyzeTap.status_side.repaint()
+    moniterView.analyzeTap.status_rater.repaint()
+
+
+def mainHideSetting():
+    moniterView.analyzeTap.status_front.saveStandardShape(cameraObject.getFrontShape())
+    posePainter.setScore(100)
+    posePainter.setLine(Qt.SolidLine)
+
+    moniterView.analyzeTap.timer.start(1000 // fps)
+    moniterView.analyzeTap.alarm_timer.start(5000)
+    moniterView.analyzeTap.w_alarm_timer.start(5000)
 
 
 # 로딩 화면
@@ -215,6 +241,7 @@ class MainView(QWidget):
 
         # 텍스트들을 모아놓을 그룹 세부 설정
         guideBox = QGroupBox('사용 방법')
+        guideBox.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
         # 아 드럽게 어렵네..
         guideBox.setStyleSheet("QGroupBox { "
                                "margin: 15px; margin-top: 20px; padding-top: 5px; "
@@ -234,7 +261,7 @@ class MainView(QWidget):
         guideText4 = QLabel('-TIP-')
         guideText5 = QLabel('1. 가장 이상적인 자세를 한 상태로\n'
                             '   사진을 찍어주세요.')
-        guideText6 = QLabel('2. 얼굴에 그림자가 지지 않도록 찍으세요.')
+        guideText6 = QLabel('2. 얼굴에 그림자가 지지 않도록 찍으세요.오오오오오오오오오')
         guideText7 = QLabel('3. 얼굴이 중앙에 오도록 찍어주세요.')
 
         # 텍스트를 그룹에 배치
@@ -262,14 +289,9 @@ class MainView(QWidget):
         container = QWidget()
         container.setStyleSheet("background-color: #e1effa")
 
-        # 카메라에 관한 위젯 배치
-        box = QVBoxLayout()
-        box.addWidget(self.camera_but)
-        box.setAlignment(Qt.AlignHCenter)
-
         vbox2 = QVBoxLayout()
         vbox2.addWidget(self.camera_label)
-        vbox2.addLayout(box)
+        vbox2.addWidget(self.camera_but, 0, Qt.AlignHCenter)
         vbox2.setAlignment(Qt.AlignHCenter)
 
         # FPS에 관한 위젯 배치
@@ -346,6 +368,8 @@ class MainView(QWidget):
             if answer == QMessageBox.Yes:  # 확인 버튼을 눌렀다면 현재 창을 숨기고 다른 창을 보인다.
                 cameraObject.setStandardPose()
 
+                mainHideSetting()
+
                 self.hide()
                 moniterView.show()
             else:  # 취소 버튼을 눌렀다면 타이머를 다시 시작한다.
@@ -421,7 +445,7 @@ class MoniterView(QDialog):
         self.setLayout(hbox)
 
         # 창 설정
-        # Qt.WindowSystemMenuHint | WindowTitleHint
+        # Qt.WindowSystemMenuHint | WindowTitleHint | WindowCloseButtonHint
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
         self.setWindowTitle('Posture Fairy')
         self.setWindowIcon(QIcon('./image/fairy-32.png'))
@@ -429,30 +453,8 @@ class MoniterView(QDialog):
         self.setGeometry(0, screen.height() - 350, 600, 300)
         self.setFixedSize(600, 300)
 
-    # 창이 생겨나기전 값 초기화
     def showEvent(self, a0: QShowEvent) -> None:
         self.tabs.setCurrentIndex(0)
-
-        self.analyzeTap.status_front.saveStandardShape(cameraObject.getFrontShape())
-        posePainter.setScore(100)
-        posePainter.setLine(Qt.SolidLine)
-
-        self.analyzeTap.timer.start(1000 // fps)
-        self.analyzeTap.alarm_timer.start(5000)
-        self.analyzeTap.w_alarm_timer.start(5000)
-
-    # 창이 사라지기 전 값 삭제
-    def hideEvent(self, a0: QHideEvent) -> None:
-        self.analyzeTap.timer.stop()
-        self.analyzeTap.alarm_timer.stop()
-        self.analyzeTap.w_alarm_timer.stop()
-
-        self.analyzeTap.status_front.clear()
-        self.analyzeTap.status_side.clear()
-
-        self.analyzeTap.status_front.repaint()
-        self.analyzeTap.status_side.repaint()
-        self.analyzeTap.status_rater.repaint()
 
 
 # 첫번째 탭
@@ -553,7 +555,7 @@ class AnalyzerTap(QWidget):
             self.status_front.setShape(points)
             self.status_side.setDegree(values[0], values[3])
 
-            if score > 70:
+            if score > 80:
                 self.alarm_timer.start(5000)
                 self.w_alarm_timer.start(5000)
 
@@ -597,6 +599,8 @@ class AnalyzerTap(QWidget):
 
     def userGone(self):
         self.see_timer.stop()
+
+        mainShowSetting()
 
         moniterView.hide()
         mainView.show()
@@ -811,6 +815,8 @@ class SettingTap(QWidget):
         answer = message.exec_()
 
         if answer == QMessageBox.Yes:  # 확인 버튼을 눌렀다면 현재 창을 숨기고 다른 창을 보인다.
+            mainShowSetting()
+
             moniterView.hide()
             mainView.show()
         else:  # 취소 버튼을 눌렀다면 타이머를 다시 시작한다.
@@ -888,7 +894,8 @@ class AlarmWindow(QWidget):
         self.warning_text.setText(fairyScript.getScript(ran))
 
     def hideEvent(self, a0: QHideEvent) -> None:
-        moniterView.analyzeTap.w_alarm_timer.start(5000)
+        if not moniterView.analyzeTap.isHidden():
+            moniterView.analyzeTap.w_alarm_timer.start(5000)
 
     def disappear(self):
         self.hide()

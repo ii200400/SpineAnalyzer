@@ -10,7 +10,7 @@ pi = math.pi
 
 class ImageAnalyzer:
     def __init__(self):
-        self.cam = cv2.VideoCapture(0)  # 카메라 지정 웹캠이 안되면 아래의 파일을 임시로 사용하겠다.
+        self.cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # 카메라 지정 웹캠이 안되면 아래의 파일을 임시로 사용하겠다.
 
         self.detector = dlib.get_frontal_face_detector()  # 얼굴인식 모델
         self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")  # 얼굴 특징점 모델
@@ -24,10 +24,9 @@ class ImageAnalyzer:
         self.std_pose = []  # 기준 자세 리스트
         self.cur_pose = []  # 현재 자세 리스트
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        print('!!')
+    def release(self):
         self.cam.release()
-        # cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
 
     # 이미지 존재여부와 이미지 자체와 이미지의 특징점을 반환하는 함수
     def faceDetect(self):
@@ -275,9 +274,9 @@ class ImageAnalyzer:
     def getStability(self, x_angle, y_angle, z_angle, turtle_per):
         stability = 100
 
-        stability -= min(abs(x_angle) / 2, 15)  # 일반적으로 -30 ~ 30
-        stability -= min(abs(y_angle) / 2, 15)  # 일반적으로 -30 ~ 30
-        stability -= min(abs(z_angle) / 2, 15)  # 일반적으로 -30 ~ 30
-        stability -= int(abs(turtle_per) / 100 * 55)  # -100 ~ 100
+        stability -= min(abs(x_angle) / 2, 20)  # 일반적으로 -30 ~ 30
+        stability -= min(abs(y_angle) / 2, 20)  # 일반적으로 -30 ~ 30
+        stability -= min(abs(z_angle) / 2, 20)  # 일반적으로 -30 ~ 30
+        stability -= int(abs(turtle_per) / 100 * 60)  # -100 ~ 100
 
         return min(100, max(0, int(stability * 1.1)))
