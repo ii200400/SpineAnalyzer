@@ -10,7 +10,7 @@ pi = math.pi
 
 class ImageAnalyzer:
     def __init__(self):
-        self.cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # 카메라 지정 웹캠이 안되면 아래의 파일을 임시로 사용하겠다.
+        self.cam = cv2.VideoCapture(0)
 
         self.detector = dlib.get_frontal_face_detector()  # 얼굴인식 모델
         self.predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")  # 얼굴 특징점 모델

@@ -201,7 +201,7 @@ class MainView(QWidget):
         cameraObject = camera.ImageAnalyzer()  # 카메라 객체 생성
 
         # 카메라 버튼에 관한 설정
-        self.camera_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.camera_label.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
         self.camera_but.setFixedSize(72, 72)
         self.camera_but.setIcon(QIcon('./image/camera.png'))
@@ -215,12 +215,13 @@ class MainView(QWidget):
         self.fps_text.setFont(QFont('나눔바른펜', 12, 100))
         self.fps_text.setStyleSheet("color: #232d40; margin: 10px 0px 0px 0px;")
         self.fps_text.setAlignment(Qt.AlignCenter)
+        self.fps_text.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
 
         self.slider.setRange(20, 80)
         self.slider.setTickPosition(QSlider.TicksRight)
         self.slider.setTickInterval(5)
         self.slider.setSliderPosition(fps)
-        self.slider.setFixedHeight(self.height() * 6 // 10)
+        # self.slider.setFixedHeight(self.height() * 6 // 10)
         self.slider.valueChanged.connect(lambda x: setSliderFPS(self.slider, self.slider_text, self.timer))
         self.slider.setStyleSheet("QSlider { padding: 10px 10px; }"
                                   "QSlider::groove:vertical {"
@@ -230,6 +231,8 @@ class MainView(QWidget):
                                   "border: 1px solid #232d40; border-radius: 4px; }"
                                   "QSlider::add-page:vertical { background: #99ddff; "
                                   "border: 0px solid ; border-radius: 1px; }")
+
+        self.slider.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
 
         self.slider_text.editingFinished.connect(lambda: pressEnter(self.slider, self.slider_text))
         self.slider_text.setStyleSheet("background-color: #cccccc; color: #e1effa"
@@ -252,16 +255,12 @@ class MainView(QWidget):
                                "padding: 5px 5px 5px 5px; }")
 
         # 사용 설병을 명세한 텍스트
-        guideText1 = QLabel('1. 노트북 카메라 혹은 웹캠을\n '
-                            '   사용가능한 상태로 설정해주세요.')
-        guideText2 = QLabel('2. 얼굴이 인식되는 상태로 하단의\n'
-                            '   카메라 버튼을 눌러정면 사진을 찍어주세요.')
-        guideText3 = QLabel('3. 자신의 자세를 실시간으로\n'
-                            '   확인하세요.')
+        guideText1 = QLabel('1. 노트북 카메라 혹은 웹캠을 사용가능한 상태로 설정해주세요.')
+        guideText2 = QLabel('2. 얼굴이 인식되는 상태로 하단의 카메라 버튼을 눌러 정면 사진을 찍어주세요.')
+        guideText3 = QLabel('3. 자신의 자세를 실시간으로 확인하세요.')
         guideText4 = QLabel('-TIP-')
-        guideText5 = QLabel('1. 가장 이상적인 자세를 한 상태로\n'
-                            '   사진을 찍어주세요.')
-        guideText6 = QLabel('2. 얼굴에 그림자가 지지 않도록 찍으세요.오오오오오오오오오')
+        guideText5 = QLabel('1. 가장 이상적인 자세를 한 상태로 사진을 찍어주세요.')
+        guideText6 = QLabel('2. 얼굴에 그림자가 지지 않도록 찍으세요.')
         guideText7 = QLabel('3. 얼굴이 중앙에 오도록 찍어주세요.')
 
         # 텍스트를 그룹에 배치
@@ -280,6 +279,7 @@ class MainView(QWidget):
         for text in guidetexts:
             text.setFont(QFont('나눔바른펜', 12, 50))
             text.setStyleSheet("color: #e1effa")
+            text.setWordWrap(True)
 
         guideText4.setAlignment(Qt.AlignCenter)
         guideText4.setFont(QFont('나눔바른펜', 12, 100))
@@ -296,9 +296,9 @@ class MainView(QWidget):
 
         # FPS에 관한 위젯 배치
         vbox3 = QVBoxLayout()
-        vbox3.addWidget(self.fps_text)
-        vbox3.addWidget(self.slider)
-        vbox3.addWidget(self.slider_text)
+        vbox3.addWidget(self.fps_text, 1)
+        vbox3.addWidget(self.slider, 8)
+        vbox3.addWidget(self.slider_text, 1)
 
         # 카메라와 FPS에 관한 위젯들 배치 및 배경 색상 지정
         hbox_t = QHBoxLayout()
@@ -321,7 +321,8 @@ class MainView(QWidget):
         self.setWindowIcon(QIcon('./image/fairy-32.png'))
         screen = QDesktopWidget().screenGeometry()
         self.setGeometry(screen.width() // 2 - 400, screen.height() // 2 - 200, 800, 400)
-        self.setFixedSize(800, 400)
+        self.setMinimumSize(800,400)
+        # self.setFixedSize(800, 400)
 
     # 창이 생겨나기전 값 초기화
     def showEvent(self, a0: QShowEvent) -> None:
@@ -340,7 +341,7 @@ class MainView(QWidget):
                               "font-family: '나눔바른펜'; font-size: 12pt; color: #e1effa; }"
                               "QMessageBox QPushButton { "
                               "background-color: #cccccc; margin: 5px; padding: 5px 15px 5px 15px; "
-                              "font-family: '나눔바른고딕'; font-size: 10pt; font-weight: bold; color: #232d40"
+                              "font-family: '나눔고딕'; font-size: 10pt; font-weight: bold; color: #232d40"
                               "border: 2px solid #232d40; border-radius: 5px; }"
                               "QMessageBox QPushButton:pressed { background-color: #8c8c8c; }")
 
@@ -426,7 +427,7 @@ class MoniterView(QDialog):
                                 # "background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0.3 #232d40, stop: 1.0 #e1effa);"
                                 "border: 2px solid #e1effa; border-bottom-color: #232d40;"
                                 "background: #232d40;"
-                                "font-family: '나눔바른고딕'; font-size: 8pt; font-weight: bold; color: #e1effa;"
+                                "font-family: '나눔고딕'; font-size: 8pt; font-weight: bold; color: #e1effa;"
                                 "border-top-left-radius: 4px; border-top-right-radius: 4px;"
                                 "min-width: 15ex; padding: 5px; }"
                                 "QTabBar::tab:!selected:hover { background: #cccccc }"
@@ -473,7 +474,7 @@ class AnalyzerTap(QWidget):
         self.status_side = posePainter.SidePose()  # 사용자 상태를 반영하는 이미지
         self.status_rater = posePainter.PoseRater()
 
-        mixer.init()
+        self.audio = mixer
         self.save_time = 0
         self.save_w_time = 0
 
@@ -494,7 +495,7 @@ class AnalyzerTap(QWidget):
             status.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Expanding)
             status.setAlignment(Qt.AlignCenter)
 
-        mixer.music.load("./sound/WindowsDefault.mp3")
+        self.audio.init()
 
         self.alarm_timer.timeout.connect(self.soundAlarm)
         self.alarm_timer.stop()
@@ -592,8 +593,10 @@ class AnalyzerTap(QWidget):
         print("sound!!")
 
         if isOnlySound:
-            mixer.music.set_volume(volume / 100)
-            mixer.music.play()
+            self.audio.music.load("./sound/WindowsDefault.mp3")
+
+            self.audio.music.set_volume(volume / 100)
+            self.audio.music.play()
 
         self.alarm_timer.start(5000)
 
@@ -618,7 +621,7 @@ class AnalyzerTap(QWidget):
                               "font-family: '나눔바른펜'; font-size: 12pt; color: #e1effa; }"
                               "QMessageBox QPushButton { "
                               "background-color: #cccccc; margin: 5px; padding: 5px 15px 5px 15px; "
-                              "font-family: '나눔바른고딕'; font-size: 10pt; font-weight: bold; color: #232d40"
+                              "font-family: '나눔고딕'; font-size: 10pt; font-weight: bold; color: #232d40"
                               "border: 2px solid #232d40; border-radius: 5px; }"
                               "QMessageBox QPushButton:pressed { background-color: #8c8c8c; }")
 
@@ -807,7 +810,7 @@ class SettingTap(QWidget):
                               "font-family: '나눔바른펜'; font-size: 12pt; color: #e1effa; }"
                               "QMessageBox QPushButton { "
                               "background-color: #cccccc; margin: 5px; padding: 5px 15px 5px 15px; "
-                              "font-family: '나눔바른고딕'; font-size: 10pt; font-weight: bold; color: #232d40"
+                              "font-family: '나눔고딕'; font-size: 10pt; font-weight: bold; color: #232d40"
                               "border: 2px solid #232d40; border-radius: 5px; }"
                               "QMessageBox QPushButton:pressed { background-color: #8c8c8c; }")
 
@@ -834,6 +837,7 @@ class AlarmWindow(QWidget):
         self.warning_text = QLabel("안녕! 나는 척추의 요정!")
 
         self.timer = QTimer()  # 타이머 (스스로 꺼지는 기간)
+        self.audio = mixer
 
         self.initUI()
 
@@ -854,6 +858,8 @@ class AlarmWindow(QWidget):
         self.warning_text.setAlignment(Qt.AlignCenter)
 
         self.timer.timeout.connect(self.disappear)
+
+        self.audio.init()
 
         vbox = QVBoxLayout()
         vbox.addWidget(self.fairy, 3)
@@ -892,6 +898,11 @@ class AlarmWindow(QWidget):
 
         ran = random.randint(1, 3)
         self.warning_text.setText(fairyScript.getScript(ran))
+
+        self.audio.music.load("./sound/WindowsError.mp3")
+
+        self.audio.music.set_volume(volume / 100)
+        self.audio.music.play()
 
     def hideEvent(self, a0: QHideEvent) -> None:
         if not moniterView.analyzeTap.isHidden():
