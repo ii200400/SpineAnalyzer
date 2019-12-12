@@ -153,6 +153,7 @@ class SplashView(QWidget):
         self.setLayout(vbox1)
 
         # 창 설정
+        self.activateWindow()
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setStyleSheet("background-color: #232d40")
         screen = QDesktopWidget().screenGeometry()
@@ -321,12 +322,14 @@ class MainView(QWidget):
         self.setWindowIcon(QIcon('./image/fairy-32.png'))
         screen = QDesktopWidget().screenGeometry()
         self.setGeometry(screen.width() // 2 - 400, screen.height() // 2 - 200, 800, 400)
-        self.setMinimumSize(800,400)
+        self.setMinimumSize(800, 400)
         # self.setFixedSize(800, 400)
 
     # 창이 생겨나기전 값 초기화
     def showEvent(self, a0: QShowEvent) -> None:
         self.timer.start(1000 // fps)
+
+        self.activateWindow()
 
     # 메시지 박스가 나오면서 동영상이 멈추고 확인 버튼을 누르면 다음 창이 뜬다.
     def confirmMassage(self):
@@ -593,7 +596,7 @@ class AnalyzerTap(QWidget):
         print("sound!!")
 
         if isOnlySound:
-            self.audio.music.load("./sound/WindowsDefault.mp3")
+            self.audio.music.load("./sound/sayHuri.mp3")
 
             self.audio.music.set_volume(volume / 100)
             self.audio.music.play()
