@@ -11,7 +11,6 @@
 ## 개발 환경
 
 + Pycharm
-+ Android Studio 3.0(안드로이드 스튜디오)
 
 ## 사용 기술
 
