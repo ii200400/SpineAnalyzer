@@ -33,5 +33,8 @@
 
 ## 미리보기(추가 요망)
 
-1. 이미지 1
-2. 이미지 2
+<img src="./image/그림1.png" width="50%" height="50%"> 
+
+<img src="./image/그림2.png" width="40%" height="40%">
+
+<img src="./image/그림3.png" width="40%" height="40%">
