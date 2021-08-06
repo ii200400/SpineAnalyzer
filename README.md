@@ -14,8 +14,9 @@
 
 ## 사용 기술
 
-+ OpenCV (얼굴 인식 AI)
++ python
 + PYQT5, CSS (GUI)
++ OpenCV + dlib 라이브러리 (얼굴 인식 AI)
 
 ## 나의 작업
 
